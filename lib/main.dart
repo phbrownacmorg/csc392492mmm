@@ -246,7 +246,7 @@ class _StudentFormState extends State<StudentForm> {
                 contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
               hint: Text('Select a problem'),
-              value: _selectedProblem,
+              initialValue: _selectedProblem,
               validator: (value) {
                 if (value == null) {
                   return 'Please select a problem';
