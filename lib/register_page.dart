@@ -4,7 +4,7 @@ import 'package:fancy_password_field/fancy_password_field.dart';
 
 class RegisterPage extends StatefulWidget {
   @override
-  _RegisterPageState createState() => _RegisterPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
 class _RegisterPageState extends State<RegisterPage> {

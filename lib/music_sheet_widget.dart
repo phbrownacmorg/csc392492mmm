@@ -6,7 +6,7 @@ class MusicSheetWidget extends StatefulWidget {
   const MusicSheetWidget({super.key});
 
   @override
-  _MusicSheetWidgetState createState() => _MusicSheetWidgetState();
+  State<MusicSheetWidget> createState() => _MusicSheetWidgetState();
 }
 
 class _MusicSheetWidgetState extends State<MusicSheetWidget> {
