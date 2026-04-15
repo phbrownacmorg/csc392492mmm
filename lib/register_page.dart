@@ -21,6 +21,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   void _submitRegister() {
     if (_formKey.currentState!.validate()) {
+      // Database write goes here
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Registration successful')),
       );
