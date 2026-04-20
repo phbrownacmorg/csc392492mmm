@@ -45,67 +45,63 @@ class _LoginPageState extends State<LoginPage> {
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: InputDecoration(
-                      labelText: 'Email',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Enter your email' : null,
-                  ),
-                  SizedBox(height: 20),
-                  TextFormField(
-                    controller: _passwordController,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      border: OutlineInputBorder(),
-                    ),
-                    obscureText: true,
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Enter your password' : null,
-                  ),
-                  SizedBox(height: 30),
-                  ElevatedButton(
-                    onPressed: _submitLogin,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                    ),
-                    child: Text(
-                      'Login',
-                      style: TextStyle(fontSize: 18, color: Colors.white),
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  GestureDetector(
-                    onTap: _navigateToRegister,
-                    child: Text(
-                      "Don't have an account? Register here",
-                      style: TextStyle(
-                        color: Colors.blue,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
-                ],
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _emailController,
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Enter your email' : null,
               ),
-            ),
-            SizedBox(height: 30),
-            Container(
-              color: Colors.grey[300],
-              padding: EdgeInsets.all(16),
-              width: double.infinity,
-              child: Center(child: Text('Bottom Banner')),
-            ),
-          ],
-        ),
+              SizedBox(height: 20),
+              TextFormField(
+                controller: _passwordController,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  border: OutlineInputBorder(),
+                ),
+                obscureText: true,
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Enter your password' : null,
+              ),
+              SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: _submitLogin,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                ),
+                child: Text(
+                  'Login',
+                  style: TextStyle(fontSize: 18, color: Colors.white),
+                ),
+              ),
+              SizedBox(height: 20),
+              GestureDetector(
+                onTap: _navigateToRegister,
+                child: Text(
+                  "Don't have an account? Register here",
+                  style: TextStyle(
+                    color: Colors.blue,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+              SizedBox(height: 30),
+              Container(
+                color: Colors.grey[300],
+                padding: EdgeInsets.all(16),
+                width: double.infinity,
+                child: Center(child: Text('Bottom Banner')),
+              ),
+            ],
+          ),
+        )
       ),
     );
   }

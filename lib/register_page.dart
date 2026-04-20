@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fancy_password_field/fancy_password_field.dart';
-
+import 'package:email_validator/email_validator.dart';
 
 class RegisterPage extends StatefulWidget {
   @override
@@ -47,14 +47,18 @@ class _RegisterPageState extends State<RegisterPage> {
               TextFormField(
                 controller: _emailController,
                 decoration: InputDecoration(
-                  labelText: 'Email',
+                  hintText: 'Email',
                   border: OutlineInputBorder(),
                 ),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Enter your email' : null,
+                keyboardType: TextInputType.emailAddress,
+                autofillHints: [AutofillHints.email],
+                // Validator only checks email syntax; there should also be a check
+                // to make sure an email isn't already in use.
+                validator: (email) => EmailValidator.validate(email ?? "")
+                  ? null
+                  : 'Enter a valid email',
               ),
               SizedBox(height: 20),
-
               FancyPasswordField(
                 passwordController: _passwordController,
                 decoration: InputDecoration(
@@ -74,8 +78,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       : 'Password does not meet requirements';
                 },
               ),
-               const SizedBox(height: 30),
-
+              SizedBox(height: 30),
               ElevatedButton(
                 onPressed: _submitRegister,
                 style: ElevatedButton.styleFrom(
