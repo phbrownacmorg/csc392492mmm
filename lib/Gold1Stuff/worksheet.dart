@@ -1,9 +1,12 @@
+import 'piece.dart';
+import 'practiceLog.dart';
+
 class Worksheet{
     String name;
     DateTime date;
     List<Piece> pieces;
     List<String> strategies;
-    List<ChecklistSlot> checklist;
+    List<PracticeLog> checklist;
 
     Worksheet({
         required this.name,

@@ -1,3 +1,5 @@
+import 'passage.dart';
+
 class Piece {
     String name;
     String composer;
@@ -10,5 +12,6 @@ class Piece {
         required this.composer,
         required this.tempo,
         required this.passages,
+        this.source,
     });
 }
