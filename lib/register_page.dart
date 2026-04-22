@@ -21,13 +21,34 @@ class _RegisterPageState extends State<RegisterPage> {
 
   void _submitRegister() {
     if (_formKey.currentState!.validate()) {
-      // Database write goes here
+      try {
+        UserCredential userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+              email: _emailController.text.trim(),
+              password: _passwordController.passwordNotifier.value,
+            );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Registration successful')),
       );
       Navigator.pop(context); // Go back to login page after registering
     }
   }
+
+  on FirebaseAuthException catch (e) {
+      String message;
+      if (e.code == 'email-already-in-use') {
+        message = 'An account already exists for that email.';
+      } else if (e.code == 'weak-password') {
+        message = 'The password provided is too weak.';
+      } else {
+        message = e.message ?? 'An error occurred.';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+         );
+    }
+  }
+}
 
   @override
   Widget build(BuildContext context) {
