@@ -9,7 +9,7 @@ class MusicSheetWidget extends StatefulWidget {
   State<MusicSheetWidget> createState() => _MusicSheetWidgetState();
 }
 
-class _MusicSheetWidgetState extends State<MusicSheetWidget> {
+class _MusicSheetWidgetState extends State<MusicSheetWidget> { 
   late List<PlutoColumn> columns;
   late List<PlutoRow> rows;
   late PlutoGridStateManager stateManager;
@@ -147,6 +147,31 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
       });
     }
   }
+  Map<String, dynamic> _getSheetData() {
+  List<Map<String, dynamic>> rowData = rows.map((row) {
+    return row.cells.map((key, cell) => MapEntry(key, cell.value));
+  }).toList();
+
+  return {
+    'rows': rowData,
+    'notes': notesController.text,
+    'videoPath': selectedVideoPath,
+  };
+}
+
+Future<void> _saveSheet() async {
+  try {
+    final data = _getSheetData();
+
+    print(data); // test output
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Sheet saved!')),
+    );
+  } catch (e) {
+    print(e);
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -264,6 +289,17 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
               const SizedBox(height: 10),
               Text('Selected: $selectedVideoPath'),
             ],
+            const SizedBox(height: 20),
+
+            ElevatedButton.icon(
+              onPressed: _saveSheet,
+              icon: const Icon(Icons.save),
+              label: const Text('Save Sheet'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+              ),
+            ),
           ],
         ),
       ),
