@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'register_page.dart'; 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -18,14 +20,44 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _submitLogin() {
-    if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login successful')),
+  Future<void> _submitLogin() async {
+  if (_formKey.currentState!.validate()) {
+    try {
+      // Login with Firebase Auth
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
-      Navigator.pop(context);
+
+      String uid = userCredential.user!.uid;
+
+      // 🗄️ Step 2: Get user role from Firestore
+      var doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+
+      String role = doc['role'];
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Login successful as $role')),
+      );
+
+      //  Navigate based on role
+      if (role == 'teacher') {
+        Navigator.pushReplacementNamed(context, '/teacher');
+      } else {
+        Navigator.pushReplacementNamed(context, '/student');
+      }
+
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Login failed: $e')),
+      );
     }
   }
+}
 
   void _navigateToRegister() {
     Navigator.push(
