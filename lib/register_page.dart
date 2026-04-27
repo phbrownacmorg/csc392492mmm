@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fancy_password_field/fancy_password_field.dart';
-<<<<<<< HEAD
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-=======
 import 'package:email_validator/email_validator.dart';
->>>>>>> e1f3fd85abb14ecdf688a565a8e10fa3d8bfd499
 
 class RegisterPage extends StatefulWidget {
   @override
@@ -31,7 +28,6 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
-<<<<<<< HEAD
   Future<void> registerUser() async {
     try {
       UserCredential userCredential =
@@ -49,16 +45,6 @@ class _RegisterPageState extends State<RegisterPage> {
         'createdAt': Timestamp.now(),
       });
 
-=======
-  void _submitRegister() {
-    if (_formKey.currentState!.validate()) {
-      try {
-        UserCredential userCredential = await FirebaseAuth.instance
-            .createUserWithEmailAndPassword(
-              email: _emailController.text.trim(),
-              password: _passwordController.passwordNotifier.value,
-            );
->>>>>>> e1f3fd85abb14ecdf688a565a8e10fa3d8bfd499
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Registration successful')),
       );
@@ -71,21 +57,21 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
-  on FirebaseAuthException catch (e) {
-      String message;
-      if (e.code == 'email-already-in-use') {
-        message = 'An account already exists for that email.';
-      } else if (e.code == 'weak-password') {
-        message = 'The password provided is too weak.';
-      } else {
-        message = e.message ?? 'An error occurred.';
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-         );
-    }
-  }
-}
+//   on FirebaseAuthException catch (e) {
+//       String message;
+//       if (e.code == 'email-already-in-use') {
+//         message = 'An account already exists for that email.';
+//       } else if (e.code == 'weak-password') {
+//         message = 'The password provided is too weak.';
+//       } else {
+//         message = e.message ?? 'An error occurred.';
+//       }
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(content: Text(message)),
+//          );
+//     }
+//   }
+// }
 
   @override
   Widget build(BuildContext context) {
@@ -119,10 +105,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   hintText: 'Email',
                   border: OutlineInputBorder(),
                 ),
-<<<<<<< HEAD
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Enter email' : null,
-=======
                 keyboardType: TextInputType.emailAddress,
                 autofillHints: [AutofillHints.email],
                 // Validator only checks email syntax; there should also be a check
@@ -130,7 +112,6 @@ class _RegisterPageState extends State<RegisterPage> {
                 validator: (email) => EmailValidator.validate(email ?? "")
                   ? null
                   : 'Enter a valid email',
->>>>>>> e1f3fd85abb14ecdf688a565a8e10fa3d8bfd499
               ),
               SizedBox(height: 20),
               FancyPasswordField(
@@ -155,13 +136,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       : 'Password does not meet requirements';
                 },
               ),
-<<<<<<< HEAD
-
-              const SizedBox(height: 30),
-
-=======
               SizedBox(height: 30),
->>>>>>> e1f3fd85abb14ecdf688a565a8e10fa3d8bfd499
               ElevatedButton(
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
