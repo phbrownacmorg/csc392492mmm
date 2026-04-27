@@ -41,48 +41,48 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBs-0HABvMmaw8u5XJBLgjxDRE9Fxazxao',
-    appId: '1:885104775556:web:4cd153b65e9150db1b4dd1',
-    messagingSenderId: '885104775556',
-    projectId: 'mcmurraymymusicmastery',
-    authDomain: 'mcmurraymymusicmastery.firebaseapp.com',
-    storageBucket: 'mcmurraymymusicmastery.firebasestorage.app',
-    measurementId: 'G-J0HDTVJEXN',
+    apiKey: 'AIzaSyBayEb5zMNGsoFB8elAHlnIrOfRooZpwGs',
+    appId: '1:255668780311:web:ceccf4d390b8ec27450b52',
+    messagingSenderId: '255668780311',
+    projectId: 'musicdb-1c5c8',
+    authDomain: 'musicdb-1c5c8.firebaseapp.com',
+    storageBucket: 'musicdb-1c5c8.firebasestorage.app',
+    measurementId: 'G-RVR5YWBTQV',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAAIrScQA_hYSqxxnDFH-nr-yKkNkEUGos',
-    appId: '1:885104775556:android:aeb037cabdbc35321b4dd1',
-    messagingSenderId: '885104775556',
-    projectId: 'mcmurraymymusicmastery',
-    storageBucket: 'mcmurraymymusicmastery.firebasestorage.app',
+    apiKey: 'AIzaSyDOyofvKMMZGjDHg4ETNzKwW3HiGpJs9fs',
+    appId: '1:255668780311:android:75fb0705f5e4ef11450b52',
+    messagingSenderId: '255668780311',
+    projectId: 'musicdb-1c5c8',
+    storageBucket: 'musicdb-1c5c8.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDlXvGucQjpK-zyyIfCFFy9ZcDZAlkhLAY',
-    appId: '1:885104775556:ios:61104882dc792a891b4dd1',
-    messagingSenderId: '885104775556',
-    projectId: 'mcmurraymymusicmastery',
-    storageBucket: 'mcmurraymymusicmastery.firebasestorage.app',
+    apiKey: 'AIzaSyCA9J4unO82nyO6N09KMYgtWUOtP_UJpMY',
+    appId: '1:255668780311:ios:ecbaacd4118f1676450b52',
+    messagingSenderId: '255668780311',
+    projectId: 'musicdb-1c5c8',
+    storageBucket: 'musicdb-1c5c8.firebasestorage.app',
     iosBundleId: 'com.example.musicApp',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyDlXvGucQjpK-zyyIfCFFy9ZcDZAlkhLAY',
-    appId: '1:885104775556:ios:61104882dc792a891b4dd1',
-    messagingSenderId: '885104775556',
-    projectId: 'mcmurraymymusicmastery',
-    storageBucket: 'mcmurraymymusicmastery.firebasestorage.app',
+    apiKey: 'AIzaSyCA9J4unO82nyO6N09KMYgtWUOtP_UJpMY',
+    appId: '1:255668780311:ios:ecbaacd4118f1676450b52',
+    messagingSenderId: '255668780311',
+    projectId: 'musicdb-1c5c8',
+    storageBucket: 'musicdb-1c5c8.firebasestorage.app',
     iosBundleId: 'com.example.musicApp',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyBs-0HABvMmaw8u5XJBLgjxDRE9Fxazxao',
-    appId: '1:885104775556:web:dd265ba536530d981b4dd1',
-    messagingSenderId: '885104775556',
-    projectId: 'mcmurraymymusicmastery',
-    authDomain: 'mcmurraymymusicmastery.firebaseapp.com',
-    storageBucket: 'mcmurraymymusicmastery.firebasestorage.app',
-    measurementId: 'G-VZLYMYTP70',
+    apiKey: 'AIzaSyBayEb5zMNGsoFB8elAHlnIrOfRooZpwGs',
+    appId: '1:255668780311:web:cabfc35a5f01f571450b52',
+    messagingSenderId: '255668780311',
+    projectId: 'musicdb-1c5c8',
+    authDomain: 'musicdb-1c5c8.firebaseapp.com',
+    storageBucket: 'musicdb-1c5c8.firebasestorage.app',
+    measurementId: 'G-CBDD39P4JY',
   );
 }
