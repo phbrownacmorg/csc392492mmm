@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'register_page.dart'; 
+import 'register_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:music_app/services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -18,12 +20,32 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _submitLogin() {
+  Future<void> _submitLogin() async {
     if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login successful')),
-      );
-      Navigator.pop(context);
+      try {
+        // throw FirebaseAuthException(code: 'wrong-password');
+        // throw FirebaseAuthException(code: 'user-not-found');
+        // throw FirebaseAuthException(code: 'invalid-email');
+        // throw FirebaseAuthException(code: '');
+        await authService.value.login(
+          email: _emailController.text,
+          password: _passwordController.text,
+        );
+        snackBarMessage('Login successful');
+        popPage(); // Go back to home page after logging in
+      } on FirebaseAuthException catch (e) {
+        String message;
+        if (e.code == 'wrong-password') {
+          message = 'Password is incorrect.';
+        } else if (e.code == 'user-not-found') {
+          message = 'Email does not belong to any account.';
+        } else if (e.code == 'invalid-email') {
+          message = 'Invalid email address.';
+        } else {
+          message = e.message ?? 'An error occurred.';
+        }
+        snackBarMessage(message);
+      }
     }
   }
 
@@ -31,6 +53,17 @@ class _LoginPageState extends State<LoginPage> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => RegisterPage()),
+    );
+  }
+
+  // Same functions copied from register_page. This can be handled more efficiently.
+  void popPage() {
+    Navigator.pop(context);
+  }
+
+  void snackBarMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 

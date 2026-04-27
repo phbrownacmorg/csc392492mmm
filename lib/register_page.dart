@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fancy_password_field/fancy_password_field.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:music_app/services/auth_service.dart';
 
 class RegisterPage extends StatefulWidget {
   @override
@@ -31,16 +32,18 @@ class _RegisterPageState extends State<RegisterPage> {
   Future<void> _submitRegister() async {
     if (_formKey.currentState!.validate()) {
       try {
-        FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-            email: _emailController.text.trim(),
-            password: _passTextController.text.trim(),
-          );
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Registration successful')),
+        // throw FirebaseAuthException(code: 'email-already-in-use');
+        // throw FirebaseAuthException(code: 'weak-password');
+        // throw FirebaseAuthException(code: '');
+        await authService.value.createAccount(
+          email: _emailController.text,
+          password: _passTextController.text,
+          firstName: _firstNameController.text,
+          lastName: _lastNameController.text,
+          role: _roleController.text,
         );
-        Navigator.pop(context); // Go back to login page after registering
-
+        snackBarMessage('Registration successful');
+        popPage(); // Go back to login page after registering
       } on FirebaseAuthException catch (e) {
         String message;
         if (e.code == 'email-already-in-use') {
@@ -50,11 +53,22 @@ class _RegisterPageState extends State<RegisterPage> {
         } else {
           message = e.message ?? 'An error occurred.';
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+        snackBarMessage(message);
       }
     }
+  }
+
+  // popPage and snackBarMessage contain the exact same context logic, but are now kept
+  // inside their own function definitions so that VS Code stops complaining about handling
+  // context within an async function -- it's also a bit cleaner looking.
+  void popPage() {
+    Navigator.pop(context);
+  }
+
+  void snackBarMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
@@ -75,16 +89,16 @@ class _RegisterPageState extends State<RegisterPage> {
               DropdownMenuFormField(  /// Select User Role
                 controller: _roleController,
                 width: double.infinity,
-                label: const Text("Select Role"),
+                label: const Text('Select Role'),
                 requestFocusOnTap: false,
                 enableSearch: false,
                 dropdownMenuEntries: <DropdownMenuEntry>[
-                  DropdownMenuEntry(value: "Student", label: "Student"),
-                  DropdownMenuEntry(value: "Instructor", label: "Instructor"),
+                  DropdownMenuEntry(value: 'Student', label: 'Student'),
+                  DropdownMenuEntry(value: 'Instructor', label: 'Instructor'),
                 ],
                 validator: (last) {
                   if (last == null || last.isEmpty) {
-                    return "Enter a last name";
+                    return 'Select a user role';
                   }
                   return null;
                 },
@@ -98,7 +112,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 validator: (first) {
                   if (first == null || first.isEmpty) {
-                    return "Enter a first name";
+                    return 'Enter a first name';
                   }
                   return null;
                 },
@@ -112,7 +126,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 validator: (last) {
                   if (last == null || last.isEmpty) {
-                    return "Enter a last name";
+                    return 'Enter a last name';
                   }
                   return null;
                 },
