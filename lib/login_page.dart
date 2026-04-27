@@ -21,41 +21,33 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _submitLogin() async {
-  if (_formKey.currentState!.validate()) {
-    try {
-      // Login with Firebase Auth
-      UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+  if (!_formKey.currentState!.validate()) return;
 
-      String uid = userCredential.user!.uid;
+  try {
+    await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+    );
 
-      // 🗄️ Step 2: Get user role from Firestore
-      var doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
+    //  DO NOT navigate manually
+    //  DO NOT show snackbar "login successful"
 
-      String role = doc['role'];
+    // AuthGate will automatically redirect user
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login successful as $role')),
-      );
+  } on FirebaseAuthException catch (e) {
+    String message;
 
-      //  Navigate based on role
-      if (role == 'teacher') {
-        Navigator.pushReplacementNamed(context, '/teacher');
-      } else {
-        Navigator.pushReplacementNamed(context, '/student');
-      }
-
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login failed: $e')),
-      );
+    if (e.code == 'user-not-found') {
+      message = 'No user found for that email.';
+    } else if (e.code == 'wrong-password') {
+      message = 'Incorrect password.';
+    } else {
+      message = e.message ?? 'Login failed.';
     }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 }
 
