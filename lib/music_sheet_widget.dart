@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MusicSheetWidget extends StatefulWidget {
   const MusicSheetWidget({super.key});
@@ -14,6 +15,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
   late List<PlutoRow> rows;
   late PlutoGridStateManager stateManager;
   String? selectedVideoPath;
+  String? selectedVideoName;
   TextEditingController notesController = TextEditingController();
 
   @override
@@ -137,16 +139,17 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
   }
 
   Future<void> _pickVideo() async {
-    FilePickerResult? result = await FilePicker.pickFiles(
-      type: FileType.video,
-    );
+  FilePickerResult? result = await FilePicker.pickFiles(
+    type: FileType.video,
+  );
 
-    if (result != null) {
-      setState(() {
-        selectedVideoPath = result.files.single.path;
-      });
-    }
+  if (result != null) {
+    setState(() {
+      selectedVideoPath = result.files.single.path;
+      selectedVideoName = result.files.single.name;
+    });
   }
+}
   Map<String, dynamic> _getSheetData() {
   List<Map<String, dynamic>> rowData = rows.map((row) {
     return row.cells.map((key, cell) => MapEntry(key, cell.value));
@@ -155,7 +158,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
   return {
     'rows': rowData,
     'notes': notesController.text,
-    'videoPath': selectedVideoPath,
+    'videoName': selectedVideoName, // saves short readable name
   };
 }
 
@@ -163,13 +166,26 @@ Future<void> _saveSheet() async {
   try {
     final data = _getSheetData();
 
-    print(data); // test output
+    await FirebaseFirestore.instance
+        .collection('music_sheets')
+        .add({
+      ...data,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Sheet saved!')),
+      const SnackBar(
+        content: Text('Sheet saved to Firebase!'),
+      ),
     );
   } catch (e) {
-    print(e);
+    print('Error saving sheet: $e');
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Error saving sheet: $e'),
+      ),
+    );
   }
 }
 
@@ -285,9 +301,9 @@ Future<void> _saveSheet() async {
                 ),
               ],
             ),
-            if (selectedVideoPath != null) ...[
-              const SizedBox(height: 10),
-              Text('Selected: $selectedVideoPath'),
+            if (selectedVideoName != null) ...[
+            const SizedBox(height: 10),
+            Text('Selected: $selectedVideoName'),
             ],
             const SizedBox(height: 20),
 
