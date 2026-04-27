@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';// for database access
+
+//class to hold info for a database item
+class Document{
+  final String name;
+  Document(this.name);
+}
 //class to hold the info for a database colection
 class Colection{
   final String name;
-  Colection(this.name);
+  Colection(this.name, this._documents);
+  List<Document>? _documents;
+  
 }
 
 
@@ -17,10 +25,11 @@ class DatabaseForm extends StatefulWidget{
 class _CreateDatabaseFormFormState extends State<DatabaseForm> {
   final TextEditingController _nameController = TextEditingController();
   Colection? _selectedColection;
+  Document? _selectedDocument;
   //final _formKey = GlobalKey<FormState>();
 
 //temp use strings for database colections.
-  List<Colection> _colections = [Colection('test')];
+  List<Colection> _colections = [Colection('No_Documents_Test', null),Colection('Documents_Test', [Document('Test_Document')])];
 
   @override
   void initState() {
@@ -71,30 +80,54 @@ class _CreateDatabaseFormFormState extends State<DatabaseForm> {
       child: Column(
         children: [
           Row(
-          children: [
-            Text(
-              'Colection:'
-            ),
-            DropdownButton<Colection>(
-              value: _selectedColection,
-              items: _colections.map((Colection collection) {
-                return DropdownMenuItem<Colection>(
+            children: [
+              SizedBox(width: 20),
+              Text(
+               'Colection:'
+              ),
+              DropdownButton<Colection>(
+                value: _selectedColection,
+                items: _colections.map((Colection collection) {
+                  return DropdownMenuItem<Colection>(
                     value: collection,
                     child: Text(collection.name),
-                );
-              }).toList(),
-              onChanged: (Colection? newValue){
-                setState(() {
-                _selectedColection = newValue;
-                });
-              },
-              hint: Text(
-                'Please select a colection'
+                  );
+                }).toList(),
+                onChanged: (Colection? newValue){
+                  setState(() {
+                    _selectedColection = newValue;
+                    _selectedDocument = null;
+                  });
+                },
+                hint: Text(
+                  'Please select a colection'
+                ),
               ),
-            ),
+              SizedBox(width: 20),
+              Text(
+               'Document:'
+              ),
+              DropdownButton<Document>(
+                value: _selectedDocument,
+                items: _selectedColection?._documents?.map((Document document) {
+                  return DropdownMenuItem<Document>(
+                    value: document,
+                    child: Text(document.name),
+                  );
+                }).toList(),
+                onChanged: (Document? newValue){
+                  setState(() {
+                    _selectedDocument = newValue;
+                  });
+                },
+                hint: Text(
+                  'Please select a document'
+                ),
+              ),
+            ],
+          ),
         ],
       )
-      ],)
     );
   }
 }
