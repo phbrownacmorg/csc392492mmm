@@ -151,14 +151,28 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
   }
 }
   Map<String, dynamic> _getSheetData() {
-  List<Map<String, dynamic>> rowData = rows.map((row) {
-    return row.cells.map((key, cell) => MapEntry(key, cell.value));
+  List<Map<String, dynamic>> rowData = stateManager.rows.map((row) {
+    return {
+      'piece': row.cells['piece']?.value,
+      'tempo': row.cells['tempo']?.value,
+      'passage': row.cells['passage']?.value,
+      'strategy': row.cells['strategy']?.value,
+      'mon': row.cells['mon']?.value,
+      'tue': row.cells['tue']?.value,
+      'wed': row.cells['wed']?.value,
+      'thu': row.cells['thu']?.value,
+      'fri': row.cells['fri']?.value,
+      'sat': row.cells['sat']?.value,
+      'sun': row.cells['sun']?.value,
+      'mastery': row.cells['mastery']?.value,
+    };
   }).toList();
 
   return {
     'rows': rowData,
     'notes': notesController.text,
-    'videoName': selectedVideoName, // saves short readable name
+    'videoName': selectedVideoName,
+    'createdAt': FieldValue.serverTimestamp(),
   };
 }
 
@@ -168,10 +182,9 @@ Future<void> _saveSheet() async {
 
     await FirebaseFirestore.instance
         .collection('music_sheets')
-        .add({
-      ...data,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+        .add(data);
+
+    if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -179,7 +192,7 @@ Future<void> _saveSheet() async {
       ),
     );
   } catch (e) {
-    print('Error saving sheet: $e');
+    if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
