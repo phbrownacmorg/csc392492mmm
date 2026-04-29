@@ -8,10 +8,9 @@ class Document{
 }
 //class to hold the info for a database colection
 class Colection{
-  final String name;
-  Colection(this.name, this._documents);
+  final String colectionPath;
+  Colection(this.colectionPath, this._documents);
   List<Document>? _documents;
-  
 }
 
 
@@ -28,16 +27,17 @@ class _CreateDatabaseFormFormState extends State<DatabaseForm> {
   Document? _selectedDocument;
   //final _formKey = GlobalKey<FormState>();
 
-//temp use strings for database colections.
-  List<Colection> _colections = [Colection('No_Documents_Test', null),Colection('Documents_Test', [Document('Test_Document')])];
+//temp use strings for database colections untill database collection loading logic is possible.
+  List<Colection> _colections = [Colection('Problems', null)];
 
   @override
   void initState() {
     super.initState();
-    //_fetchProblemsFromFirestore();
+    //_fetchCollectionsFromFirestore();
+    _fetchDocumentsFromFirestore();
   }
-
-  /*Future<void> _fetchProblemsFromFirestore() async {
+  //need to get a database that allowes accessing a list of collections for this to be implemented
+  /*Future<void> _fetchCollectionsFromFirestore() async {
     try {
       final querySnapshot = await FirebaseFirestore.instance.collection('Problems').get();
       final problems = querySnapshot.docs.map((doc) {
@@ -60,6 +60,16 @@ class _CreateDatabaseFormFormState extends State<DatabaseForm> {
       );
     }
   }*/
+  
+  Future<void> _fetchDocumentsFromFirestore() async {
+    for (var index = 0; index < _colections.length; index += 1){
+      final querySnapshot = await FirebaseFirestore.instance.collection(_colections[index].colectionPath).get();
+      _colections[index]._documents = querySnapshot.docs.map<Document>((element){
+        final data = element.data();
+        return Document(data.toString());
+      }).toList();
+    }
+  }
 
   @override
   void dispose() {
@@ -90,7 +100,7 @@ class _CreateDatabaseFormFormState extends State<DatabaseForm> {
                 items: _colections.map((Colection collection) {
                   return DropdownMenuItem<Colection>(
                     value: collection,
-                    child: Text(collection.name),
+                    child: Text(collection.colectionPath),
                   );
                 }).toList(),
                 onChanged: (Colection? newValue){
