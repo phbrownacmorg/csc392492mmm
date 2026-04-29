@@ -13,7 +13,7 @@ dependencies:
     sdk: flutter
 
   firebase_core: ^4.6.0
-  firebase_auth: ^6.0.0
+  firebase_auth: ^6.4.0
   cloud_firestore: ^6.2.0
 
   sqflite: ^2.3.0
@@ -30,7 +30,6 @@ dependencies:
   drift: ^2.32.1
   drift_flutter: ^0.3.0
   email_validator: '^2.1.17'
-  firebase_auth: ^6.4.0
 
 dev_dependencies:
   flutter_test:

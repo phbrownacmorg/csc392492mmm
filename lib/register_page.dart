@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fancy_password_field/fancy_password_field.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:email_validator/email_validator.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:music_app/services/auth_service.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -152,9 +150,6 @@ class _RegisterPageState extends State<RegisterPage> {
               FancyPasswordField(  /// Enter Password
                 controller: _passTextController,
                 passwordController: _passwordController,
-                onChanged: (value) {
-                  _passwordTextController.text = value;
-                },
                 decoration: InputDecoration(
                   labelText: 'Password',
                   border: OutlineInputBorder(),
@@ -176,11 +171,7 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
               SizedBox(height: 30),
               ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    registerUser();
-                  }
-                },
+                onPressed: _submitRegister,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
                   padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
