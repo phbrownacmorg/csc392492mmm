@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'main.dart'; // Adjust the import path if your main.dart is in a different folder
+import 'package:music_app/main.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -8,8 +9,12 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<MyAppState>(context);
-    final name = appState.studentName ?? 'Guest';
+    // final name = appState.studentName ?? 'Guest';
+    // final name = '[Not signed in]';
     final problem = appState.selectedProblem?.name ?? 'None';
+
+    final user = FirebaseAuth.instance.currentUser;
+    String? email = user != null ? user.email : '[Not signed in]';
 
     return Scaffold(
       appBar: AppBar(
@@ -22,7 +27,7 @@ class ProfilePage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Name: $name',
+              'Email: $email',
               style: const TextStyle(fontSize: 20),
             ),
             const SizedBox(height: 10),

@@ -4,8 +4,21 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:music_app/main.dart';
 
 ValueNotifier<AuthService> authService = ValueNotifier(AuthService());
+
+// class AuthGate extends StatelessWidget{
+//   @override
+//   Widget build(BuildContext context) {
+//     return StreamBuilder<User?>(
+//       stream: FirebaseAuth.instance.authStateChanges(),
+//       builder: (context, snapshot) {
+//         return MyHomePage();
+//       },
+//     );
+//   }
+// }
 
 class AuthService {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;

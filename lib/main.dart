@@ -7,12 +7,11 @@ import 'music_sheet_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'profile_page.dart';
 
-
-
 void main() async{
-   WidgetsFlutterBinding.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -32,7 +31,7 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
         ),
-        home: MyHomePage(),
+        home: AuthGate(), // Redirects back to MyHomePage()
       ),
     );
   }
@@ -87,7 +86,7 @@ class MyHomePage extends StatelessWidget {
                 style: TextStyle(color: const Color.fromARGB(255, 255, 255, 255)),
               ),
             ),
-          )
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -152,6 +151,18 @@ class MyHomePage extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class AuthGate extends StatelessWidget{
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        return MyHomePage();
+      },
     );
   }
 }
