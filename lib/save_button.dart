@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 class SaveButton extends StatelessWidget {
-  final VoidCallBack? onPressed; // this should help with errors and allow callback 
+  final VoidCallback? onPressed; // this should help with errors and allow callback 
   const SaveButton({super.key, this.onPressed});
   @override
   Widget build(BuildContext context) {

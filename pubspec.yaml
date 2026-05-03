@@ -24,6 +24,7 @@ dependencies:
   fancy_password_field: ^2.0.8
   firebase_core: ^4.6.0
   cloud_firestore: ^6.2.0
+  firebase_storage: ^13.2.0
   drift: ^2.32.1
   drift_flutter: ^0.3.0
 

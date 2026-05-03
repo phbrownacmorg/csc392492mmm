@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 import 'package:file_picker/file_picker.dart';
@@ -13,8 +15,8 @@ class MusicSheetWidget extends StatefulWidget {
 class _MusicSheetWidgetState extends State<MusicSheetWidget> { 
   late List<PlutoColumn> columns;
   late List<PlutoRow> rows;
-  late PlutoGridStateManager stateManager;
-  String? selectedVideoPath;
+  PlutoGridStateManager? stateManager;
+  Uint8List? selectedVideoBytes;
   String? selectedVideoName;
   TextEditingController notesController = TextEditingController();
 
@@ -134,24 +136,26 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
   void _addNewRow() {
     setState(() {
       rows.add(_createNewPracticeRow());
-      stateManager.resetCurrentState();
+      stateManager?.resetCurrentState();
     });
   }
 
   Future<void> _pickVideo() async {
   FilePickerResult? result = await FilePicker.pickFiles(
     type: FileType.video,
+    withData: true,
   );
 
   if (result != null) {
     setState(() {
-      selectedVideoPath = result.files.single.path;
+      selectedVideoBytes = result.files.single.bytes;
       selectedVideoName = result.files.single.name;
     });
   }
 }
   Map<String, dynamic> _getSheetData() {
-  List<Map<String, dynamic>> rowData = stateManager.rows.map((row) {
+  List<Map<String, dynamic>> rowData =
+    stateManager!.rows.map((row) {
     return {
       'piece': row.cells['piece']?.value,
       'tempo': row.cells['tempo']?.value,
@@ -177,21 +181,70 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
 }
 
 Future<void> _saveSheet() async {
+  print("1 - _saveSheet started");
+
   try {
+    print("2 - checking stateManager");
+
+    if (stateManager == null) {
+      print("STOP - stateManager is null");
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Grid not ready yet. Try again.'),
+        ),
+      );
+      return;
+    }
+
+    print("3 - stateManager is ready");
+
+    String? videoUrl;
+
+    if (selectedVideoBytes != null && selectedVideoName != null) {
+      print("4 - video selected: $selectedVideoName");
+
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('music_sheet_videos/$selectedVideoName');
+
+      print("5 - uploading video to storage");
+
+      await storageRef.putData(selectedVideoBytes!);
+
+      print("6 - video uploaded");
+
+      videoUrl = await storageRef.getDownloadURL();
+
+      print("7 - video URL received: $videoUrl");
+    } else {
+      print("4 - no video selected");
+    }
+
+    print("8 - getting sheet data");
+
     final data = _getSheetData();
+    data['videoUrl'] = videoUrl;
+
+    print("9 - saving to Firestore");
 
     await FirebaseFirestore.instance
         .collection('music_sheets')
         .add(data);
 
+    print("10 - Firestore save complete");
+
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Sheet saved to Firebase!'),
+        content: Text('Sheet and video saved to Firebase!'),
       ),
     );
-  } catch (e) {
+  } catch (e, stackTrace) {
+    print("SAVE SHEET ERROR: $e");
+    print(stackTrace);
+
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -321,7 +374,10 @@ Future<void> _saveSheet() async {
             const SizedBox(height: 20),
 
             ElevatedButton.icon(
-              onPressed: _saveSheet,
+              onPressed: () {
+              debugPrint("SAVE BUTTON CLICKED");
+              _saveSheet();
+            },
               icon: const Icon(Icons.save),
               label: const Text('Save Sheet'),
               style: ElevatedButton.styleFrom(
