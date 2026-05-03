@@ -13,8 +13,9 @@ class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _fullnameController = TextEditingController();
   final TextEditingController _passwordTextController = TextEditingController();
+
 
   final FancyPasswordController _passwordController =
       FancyPasswordController();
@@ -22,7 +23,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   void dispose() {
     _emailController.dispose();
-    _usernameController.dispose();
+    _fullnameController.dispose();
     _passwordTextController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -43,7 +44,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
       // 🗄️ Save user profile + ROLE
       await FirebaseFirestore.instance.collection('users').doc(uid).set({
-        'username': _usernameController.text.trim(),
+        'username': _fullnameController.text.trim(),
         'email': _emailController.text.trim(),
         'role': 'student',
         'createdAt': Timestamp.now(),
@@ -90,20 +91,25 @@ class _RegisterPageState extends State<RegisterPage> {
           key: _formKey,
           child: Column(
             children: [
-              // USERNAME
-              TextFormField(
-                controller: _usernameController,
-                decoration: InputDecoration(
-                  labelText: 'Username',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Enter username' : null,
-              ),
-              SizedBox(height: 20),
+              // FULLNAME
+  // FULL NAME
+TextFormField(
+  controller: _fullnameController,
+  decoration: InputDecoration(
+    labelText: 'Full name',
+    border: OutlineInputBorder(),
+  ),
+  validator: (value) =>
+      value == null || value.isEmpty ? 'Enter full name' : null,
+),
 
-              // EMAIL
-              TextFormField(
+SizedBox(height: 20),
+// EMAIL
+        
+
+
+   
+                 TextFormField(
                 controller: _emailController,
                 decoration: InputDecoration(
                   labelText: 'Email',

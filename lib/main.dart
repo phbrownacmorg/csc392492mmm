@@ -13,6 +13,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'firebase_options.dart';
+import 'admin_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -88,13 +89,13 @@ class RoleRedirect extends StatelessWidget {
         final data = snapshot.data!.data() as Map<String, dynamic>;
         final role = data['role'];
 
-        if (role == 'student') {
-          return MyHomePage();
-        } else if (role == 'admin') {
-          return MyHomePage(); // replace later with AdminPage
-        } else {
-          return LoginPage();
-        }
+   if (role == 'student') {
+  return MyHomePage();
+} else if (role == 'admin') {
+  return AdminPage();
+} else {
+  return LoginPage();
+}    
       },
     );
   }
