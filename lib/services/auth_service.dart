@@ -1,24 +1,14 @@
+// A collection of functions that communicate with login_page, register_page, and
+// profile_page to handle most of the database logic on behalf of those files.
+
 // Uses Flutter Mapp's example file as a starting point.
 // https://youtu.be/pioTvtt3O3I?si=fd1S52sr82R79U2q 
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:music_app/main.dart';
 
 ValueNotifier<AuthService> authService = ValueNotifier(AuthService());
-
-// class AuthGate extends StatelessWidget{
-//   @override
-//   Widget build(BuildContext context) {
-//     return StreamBuilder<User?>(
-//       stream: FirebaseAuth.instance.authStateChanges(),
-//       builder: (context, snapshot) {
-//         return MyHomePage();
-//       },
-//     );
-//   }
-// }
 
 class AuthService {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
@@ -65,9 +55,29 @@ class AuthService {
     }
   }
 
+  Future<Map<String, dynamic>?> getUserData() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+      return doc.data() as Map<String, dynamic>?;
+    }
+    return null;
+  }
+
+  Future<bool> doesEmailExist(String email) async {
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+      .collection('users')
+      .where('email', isEqualTo: email)
+      .get();
+    return snapshot.docs.isNotEmpty;
+  }
+
+
   // Everything below is other functions from Flutter Mapp. We can either use them
   // later, or delete them if we don't need them.
-
 
   // Future<void> signOut() async {
   //   await firebaseAuth.signOut();

@@ -30,13 +30,12 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> _submitRegister() async {
-    if (_formKey.currentState!.validate()) {
+    final emailExists = await authService.value.doesEmailExist(_emailController.text.toLowerCase());
+    print(emailExists);
+    if (_formKey.currentState!.validate() && !emailExists) {
       try {
-        // throw FirebaseAuthException(code: 'email-already-in-use');
-        // throw FirebaseAuthException(code: 'weak-password');
-        // throw FirebaseAuthException(code: '');
         await authService.value.createAccount(
-          email: _emailController.text,
+          email: _emailController.text.toLowerCase(),
           password: _passTextController.text,
           firstName: _firstNameController.text,
           lastName: _lastNameController.text,
@@ -47,6 +46,7 @@ class _RegisterPageState extends State<RegisterPage> {
       } on FirebaseAuthException catch (e) {
         String message;
         if (e.code == 'email-already-in-use') {
+          // Won't work — we have Firebase email enumeration protection enabled
           message = 'An account already exists for that email.';
         } else if (e.code == 'weak-password') {
           message = 'The password provided is too weak.';
@@ -55,12 +55,13 @@ class _RegisterPageState extends State<RegisterPage> {
         }
         snackBarMessage(message);
       }
+    } else if (emailExists) {
+      snackBarMessage('An account already exists for that email.');
+    } else {
+      snackBarMessage('Something went wrong.');
     }
   }
 
-  // popPage and snackBarMessage contain the exact same context logic, but are now kept
-  // inside their own function definitions so that VS Code stops complaining about handling
-  // context within an async function -- it's also a bit cleaner looking.
   void popPage() {
     Navigator.pop(context);
   }

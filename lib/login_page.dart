@@ -3,6 +3,12 @@ import 'register_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:music_app/services/auth_service.dart';
 
+// Eventually: currently, the app prevents a user from logging in after they're
+// already logged in. Make it so the email + password validators are hidden when
+// this happens (i.e., 'Enter your...' doesn't appear.)
+
+// In the future: implement a way to change your email and/or password.
+
 class LoginPage extends StatefulWidget {
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -21,12 +27,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _submitLogin() async {
-    if (_formKey.currentState!.validate()) {
+    if (_formKey.currentState!.validate() && 
+      FirebaseAuth.instance.currentUser == null) {
       try {
-        // throw FirebaseAuthException(code: 'wrong-password');
-        // throw FirebaseAuthException(code: 'user-not-found');
-        // throw FirebaseAuthException(code: 'invalid-email');
-        // throw FirebaseAuthException(code: '');
         await authService.value.login(
           email: _emailController.text,
           password: _passwordController.text,
@@ -35,10 +38,8 @@ class _LoginPageState extends State<LoginPage> {
         popPage(); // Go back to home page after logging in
       } on FirebaseAuthException catch (e) {
         String message;
-        if (e.code == 'wrong-password') {
-          message = 'Password is incorrect.';
-        } else if (e.code == 'user-not-found') {
-          message = 'Email does not belong to any account.';
+        if (e.code == 'invalid-credential') {
+          message = 'Incorrect email or password.';
         } else if (e.code == 'invalid-email') {
           message = 'Invalid email address.';
         } else {
@@ -46,6 +47,10 @@ class _LoginPageState extends State<LoginPage> {
         }
         snackBarMessage(message);
       }
+    } else if (FirebaseAuth.instance.currentUser != null) {
+      snackBarMessage('User is already logged in.');
+    } else {
+      snackBarMessage('Something went wrong.');
     }
   }
 
@@ -56,7 +61,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // Same functions copied from register_page. This can be handled more efficiently.
   void popPage() {
     Navigator.pop(context);
   }
