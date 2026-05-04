@@ -31,7 +31,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Future<void> _submitRegister() async {
     final emailExists = await authService.value.doesEmailExist(_emailController.text.toLowerCase());
-    print(emailExists);
     if (_formKey.currentState!.validate() && !emailExists) {
       try {
         await authService.value.createAccount(

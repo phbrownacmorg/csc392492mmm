@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'register_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:music_app/services/auth_service.dart';
+import 'package:fancy_password_field/fancy_password_field.dart';
 
 // Eventually: currently, the app prevents a user from logging in after they're
 // already logged in. Make it so the email + password validators are hidden when
@@ -96,13 +97,14 @@ class _LoginPageState extends State<LoginPage> {
                     value == null || value.isEmpty ? 'Enter your email' : null,
               ),
               SizedBox(height: 20),
-              TextFormField(
+              FancyPasswordField(
                 controller: _passwordController,
                 decoration: InputDecoration(
                   labelText: 'Password',
                   border: OutlineInputBorder(),
                 ),
-                obscureText: true,
+                hasStrengthIndicator: false,
+                hasShowHidePassword: true,
                 validator: (value) =>
                     value == null || value.isEmpty ? 'Enter your password' : null,
               ),

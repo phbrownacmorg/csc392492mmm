@@ -75,13 +75,14 @@ class AuthService {
     return snapshot.docs.isNotEmpty;
   }
 
+  Future<void> signOut() async {
+    await firebaseAuth.signOut();
+  }
+
+
 
   // Everything below is other functions from Flutter Mapp. We can either use them
   // later, or delete them if we don't need them.
-
-  // Future<void> signOut() async {
-  //   await firebaseAuth.signOut();
-  // }
 
   // Future<void> resetPassword({
   //   required String email,

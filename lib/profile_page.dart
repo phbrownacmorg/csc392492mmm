@@ -1,13 +1,6 @@
 import 'package:flutter/material.dart';
-// import 'package:provider/provider.dart'; // Old import
-// import 'package:music_app/main.dart';  // Old import
 import 'package:music_app/services/auth_service.dart';
-
-// Eventually: add condition that toggles Sign Out button (currently set to null)
-// (Also, make the Sign Out button actually work)
-
-// If you can implement the Sign Out button on the homepage and get it working,
-// please do that. I tried to add a button there, but I kept having issues.
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -21,6 +14,29 @@ class _ProfilePageState extends State<ProfilePage> {
   String lastName = '';
   String email = '[Not Logged In]';
   String role = '[Not Logged In]';
+  bool _isEnabled = false;
+
+  Future<void> _submitSignOut() async {
+    if (FirebaseAuth.instance.currentUser != null) {
+      try {
+        await authService.value.signOut();
+        snackBarMessage('You have been signed out.');
+        popPage(); // Go back to home page after logging in
+      } on FirebaseAuthException catch (e) {
+        String message;
+        if (e.code == 'network-request-failed') {
+          message = 'Network Error. Please try again.';
+        } else if (e.code == 'internal-error') {
+          message = 'Internal Error. Please try again.';
+        } else {
+          message = e.message ?? 'An error occurred.';
+        }
+        snackBarMessage(message);
+      }
+    } else {
+      snackBarMessage('Something went wrong.');
+    }
+  }
 
   @override
   void initState() {
@@ -37,7 +53,18 @@ class _ProfilePageState extends State<ProfilePage> {
         email = data['email'];
         role = data['role'];
       });
+      _isEnabled = true;
     }
+  }
+
+  void popPage() {
+    Navigator.pop(context);
+  }
+
+  void snackBarMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
@@ -78,7 +105,9 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: null,
+              onPressed: _isEnabled
+                ? () => _submitSignOut()
+                : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
