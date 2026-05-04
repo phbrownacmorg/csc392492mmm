@@ -16,7 +16,6 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _fullnameController = TextEditingController();
   final TextEditingController _passwordTextController = TextEditingController();
 
-
   final FancyPasswordController _passwordController =
       FancyPasswordController();
 
@@ -29,11 +28,12 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
+  //  REGISTER FUNCTION
   Future<void> registerUser() async {
     if (!_formKey.currentState!.validate()) return;
 
     try {
-      // 🔐 Create user
+      //  Create user
       UserCredential userCredential =
           await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
@@ -42,19 +42,22 @@ class _RegisterPageState extends State<RegisterPage> {
 
       String uid = userCredential.user!.uid;
 
-      // 🗄️ Save user profile + ROLE
+      //  Save user profile + ROLE
       await FirebaseFirestore.instance.collection('users').doc(uid).set({
-        'username': _fullnameController.text.trim(),
+        'fullname': _fullnameController.text.trim(),
         'email': _emailController.text.trim(),
         'role': 'student',
         'createdAt': Timestamp.now(),
       });
 
+      //  Success message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Registration successful')),
       );
 
+      // Go back to login
       Navigator.pop(context);
+
     } on FirebaseAuthException catch (e) {
       String message;
 
@@ -69,6 +72,7 @@ class _RegisterPageState extends State<RegisterPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
       );
+
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
@@ -91,25 +95,21 @@ class _RegisterPageState extends State<RegisterPage> {
           key: _formKey,
           child: Column(
             children: [
-              // FULLNAME
-  // FULL NAME
-TextFormField(
-  controller: _fullnameController,
-  decoration: InputDecoration(
-    labelText: 'Full name',
-    border: OutlineInputBorder(),
-  ),
-  validator: (value) =>
-      value == null || value.isEmpty ? 'Enter full name' : null,
-),
+              // FULL NAME
+              TextFormField(
+                controller: _fullnameController,
+                decoration: InputDecoration(
+                  labelText: 'Full name',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Enter full name' : null,
+              ),
 
-SizedBox(height: 20),
-// EMAIL
-        
+              SizedBox(height: 20),
 
-
-   
-                 TextFormField(
+              // EMAIL
+              TextFormField(
                 controller: _emailController,
                 decoration: InputDecoration(
                   labelText: 'Email',
@@ -120,6 +120,7 @@ SizedBox(height: 20),
                     ? null
                     : 'Enter a valid email',
               ),
+
               SizedBox(height: 20),
 
               // PASSWORD
@@ -153,7 +154,8 @@ SizedBox(height: 20),
                 onPressed: registerUser,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
-                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                 ),
                 child: Text(
                   'Register',
