@@ -4,7 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';// for database access
 //class to hold info for a database item
 class Document{
   final String name;
-  Document(this.name);
+  final Map<String, dynamic> data;
+  Document(this.name, this.data);
 }
 //class to hold the info for a database colection
 class Colection{
@@ -25,10 +26,13 @@ class _CreateDatabaseFormFormState extends State<DatabaseForm> {
   final TextEditingController _nameController = TextEditingController();
   Colection? _selectedColection;
   Document? _selectedDocument;
+  String _documentJson = '';
   //final _formKey = GlobalKey<FormState>();
 
 //temp use strings for database colections untill database collection loading logic is possible.
   List<Colection> _colections = [Colection('Problems', null)];
+//Update when doocument format changes
+  Map<String,String> _documentIdTable = {'Problems':'problem_id',};
 
   @override
   void initState() {
@@ -66,7 +70,7 @@ class _CreateDatabaseFormFormState extends State<DatabaseForm> {
       final querySnapshot = await FirebaseFirestore.instance.collection(_colections[index].colectionPath).get();
       _colections[index]._documents = querySnapshot.docs.map<Document>((element){
         final data = element.data();
-        return Document(data.toString());
+        return Document(data[_documentIdTable[_colections[index].colectionPath]].toString(), data);
       }).toList();
     }
   }
@@ -107,6 +111,7 @@ class _CreateDatabaseFormFormState extends State<DatabaseForm> {
                   setState(() {
                     _selectedColection = newValue;
                     _selectedDocument = null;
+                    _documentJson = '';
                   });
                 },
                 hint: Text(
@@ -128,6 +133,12 @@ class _CreateDatabaseFormFormState extends State<DatabaseForm> {
                 onChanged: (Document? newValue){
                   setState(() {
                     _selectedDocument = newValue;
+                    if(newValue != null){
+                      _documentJson = newValue.data.toString();
+                    }
+                    else{
+                      _documentJson = '';
+                    }
                   });
                 },
                 hint: Text(
@@ -136,6 +147,9 @@ class _CreateDatabaseFormFormState extends State<DatabaseForm> {
               ),
             ],
           ),
+          Text(
+            _documentJson
+          )
         ],
       )
     );
