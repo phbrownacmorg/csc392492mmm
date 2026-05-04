@@ -30,7 +30,7 @@ class _CreateDatabaseFormFormState extends State<DatabaseForm> {
   //final _formKey = GlobalKey<FormState>();
 
 //temp use strings for database colections untill database collection loading logic is possible.
-  List<Colection> _colections = [Colection('Problems', null),Colection('Solutions', null),Colection('Strategies', null)];
+  List<Colection> _colections = [Colection('Problems', null),Colection('Solutions', null),Colection('Strategies', null),Colection('users',null)];
 //Update when doocument format changes
   Map<String,String> _documentIdTable = {'Problems':'problem_id','Solutions':'sol_id','Strategies':'s_id'};
 
@@ -70,7 +70,15 @@ class _CreateDatabaseFormFormState extends State<DatabaseForm> {
       final querySnapshot = await FirebaseFirestore.instance.collection(_colections[index].colectionPath).get();
       _colections[index]._documents = querySnapshot.docs.map<Document>((element){
         final data = element.data();
-        return Document(data[_documentIdTable[_colections[index].colectionPath]].toString(), data);
+        String documentName = '';
+        //use hash of document as fallback
+        if(_documentIdTable[_colections[index].colectionPath] != null){
+          documentName = data[_documentIdTable[_colections[index].colectionPath]].toString();
+        }
+        else{
+          documentName = data.hashCode.toString();
+        }
+        return Document(documentName, data);
       }).toList();
     }
   }
