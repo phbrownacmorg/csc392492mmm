@@ -14,6 +14,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _fullnameController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordTextController = TextEditingController();
 
   final FancyPasswordController _passwordController =
@@ -23,12 +24,13 @@ class _RegisterPageState extends State<RegisterPage> {
   void dispose() {
     _emailController.dispose();
     _fullnameController.dispose();
+    _usernameController.dispose();
     _passwordTextController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  //  REGISTER FUNCTION
+  // REGISTER FUNCTION
   Future<void> registerUser() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -45,17 +47,18 @@ class _RegisterPageState extends State<RegisterPage> {
       //  Save user profile + ROLE
       await FirebaseFirestore.instance.collection('users').doc(uid).set({
         'fullname': _fullnameController.text.trim(),
+        'username': _usernameController.text.trim(),
         'email': _emailController.text.trim(),
         'role': 'student',
         'createdAt': Timestamp.now(),
       });
 
-      //  Success message
+      // Success message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Registration successful')),
       );
 
-      // Go back to login
+      //  Go back to login
       Navigator.pop(context);
 
     } on FirebaseAuthException catch (e) {
@@ -108,7 +111,21 @@ class _RegisterPageState extends State<RegisterPage> {
 
               SizedBox(height: 20),
 
-              // EMAIL
+              // USERNAME
+            TextFormField(
+              controller: _usernameController,
+              decoration: InputDecoration(
+                labelText: 'Username',
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) =>
+                  value == null || value.isEmpty ? 'Enter username' : null,
+            ),
+
+            SizedBox(height: 20),
+
+
+           // EMAIL
               TextFormField(
                 controller: _emailController,
                 decoration: InputDecoration(
@@ -116,9 +133,10 @@ class _RegisterPageState extends State<RegisterPage> {
                   border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.emailAddress,
-                validator: (email) => EmailValidator.validate(email ?? "")
-                    ? null
-                    : 'Enter a valid email',
+                validator: (email) =>
+                    EmailValidator.validate(email ?? "")
+                        ? null
+                        : 'Enter a valid email',
               ),
 
               SizedBox(height: 20),
