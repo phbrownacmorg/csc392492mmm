@@ -30,7 +30,7 @@ class _CreateDatabaseFormFormState extends State<DatabaseForm> {
   //final _formKey = GlobalKey<FormState>();
 
 //temp use strings for database colections untill database collection loading logic is possible.
-  List<Colection> _colections = [Colection('Problems', null),Colection('Solutions', null),Colection('Strategies', null),Colection('users',null)];
+  List<Colection> _colections = [Colection('Problems', null),Colection('Solutions', null),Colection('Strategies', null),Colection('users',null),Colection('music_sheets',null)];
 //Update when doocument format changes
   Map<String,String> _documentIdTable = {'Problems':'problem_id','Solutions':'sol_id','Strategies':'s_id'};
 
