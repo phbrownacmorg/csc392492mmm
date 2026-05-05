@@ -35,7 +35,7 @@ class _LoginPageState extends State<LoginPage> {
           email: _emailController.text,
           password: _passwordController.text,
         );
-        snackBarMessage('Login successful');
+        snackBarMessage('Login successful.');
         popPage(); // Go back to home page after logging in
       } on FirebaseAuthException catch (e) {
         String message;
@@ -87,6 +87,7 @@ class _LoginPageState extends State<LoginPage> {
           key: _formKey,
           child: Column(
             children: [
+              // TODO: Add ability to sign in with phone number. Ideally, email and phone number would share a text field. Likely, most of the logic would be handled by auth_service.dart.
               TextFormField(
                 controller: _emailController,
                 decoration: InputDecoration(
@@ -120,6 +121,7 @@ class _LoginPageState extends State<LoginPage> {
                   style: TextStyle(fontSize: 18, color: Colors.white),
                 ),
               ),
+              // TODO: Add two stylized buttons for logins with Google and Facebook (don't worry about functionality yet).
               SizedBox(height: 20),
               GestureDetector(
                 onTap: _navigateToRegister,

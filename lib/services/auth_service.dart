@@ -42,11 +42,19 @@ class AuthService {
         .collection('users')
         .doc(userCredential.user!.uid)
         .set({
+          'uid': userCredential.user!.uid, // EVERY user has a unique UID
           'email': email,
           'firstName': firstName,
           'lastName': lastName,
           'role': role,
-          'problems': null,  // Problems are created after registration 
+          // Everything below is NOT required during registration!
+          'phone': null, // Add ability to add # to an eventual profile editor 
+          'myInstructor': null,
+          'problems': [],
+          'assignedSheets': [],
+          'completedSheets': [],
+          // TODO: Add Google account field
+          // TODO: Add Facebook account field
         });
 
       return null;
@@ -54,6 +62,10 @@ class AuthService {
       return e.toString();
     }
   }
+
+  // TODO: Create new function to handle login with Google account
+
+  // TODO: Create new function to handle login with Facebook account
 
   Future<Map<String, dynamic>?> getUserData() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;

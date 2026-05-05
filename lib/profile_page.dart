@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:music_app/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+// TODO: Add a way to edit user profile. Possibly, this could take the form of a new account settings page that can be accessed from the profile page. This page would allow important account functions, such as setting a phone number, changing email/password, and deleting an account (though most of the logic would be handled by auth_service.dart).
+
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
@@ -13,7 +15,9 @@ class _ProfilePageState extends State<ProfilePage> {
   String firstName = 'Guest';
   String lastName = '';
   String email = '[Not Logged In]';
+  String myInstructor = '[Not Logged In]';
   String role = '[Not Logged In]';
+  String phone = '[Not Logged In]';
   bool _isEnabled = false;
 
   Future<void> _submitSignOut() async {
@@ -21,7 +25,7 @@ class _ProfilePageState extends State<ProfilePage> {
       try {
         await authService.value.signOut();
         snackBarMessage('You have been signed out.');
-        popPage(); // Go back to home page after logging in
+        popPage(); // Go back to home page after signing out
       } on FirebaseAuthException catch (e) {
         String message;
         if (e.code == 'network-request-failed') {
@@ -51,7 +55,9 @@ class _ProfilePageState extends State<ProfilePage> {
         firstName = data['firstName'];
         lastName = data['lastName'];
         email = data['email'];
+        myInstructor = data['myInstructor'] ?? '[No Instructor Set]';
         role = data['role'];
+        phone = data['phone'] ?? '[No Phone Number Set]';
       });
       _isEnabled = true;
     }
@@ -100,9 +106,20 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             SizedBox(height: 10),
             Text(
+              'My Instructor: $myInstructor',
+              style: const TextStyle(fontSize: 20),
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Phone: $phone',
+              style: const TextStyle(fontSize: 20),
+            ),
+            SizedBox(height: 10),
+            Text(
               'Selected Problem: $problem',
               style: const TextStyle(fontSize: 20),
             ),
+            // TODO: Add a way to display information on assigned sheets and completed sheets (hint: both fields are initialized as empty lists in auth_service.dart).
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _isEnabled
