@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:typed_data';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -234,7 +235,22 @@ Future<void> _saveSheet() async {
     }
 
     final data = _getSheetData();
-    data['videoUrl'] = videoUrl;
+data['videoUrl'] = videoUrl;
+
+final currentUser = FirebaseAuth.instance.currentUser;
+
+if (currentUser != null && currentUser.email != null) {
+  final userQuery = await FirebaseFirestore.instance
+      .collection('users')
+      .where('email', isEqualTo: currentUser.email)
+      .limit(1)
+      .get();
+
+  if (userQuery.docs.isNotEmpty) {
+    data['userId'] = userQuery.docs.first.id;
+    data['userEmail'] = currentUser.email;
+  }
+}
 
     await FirebaseFirestore.instance
         .collection('music_sheets')
