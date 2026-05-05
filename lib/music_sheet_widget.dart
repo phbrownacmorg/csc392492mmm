@@ -19,11 +19,43 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
   Uint8List? selectedVideoBytes;
   String? selectedVideoName;
   TextEditingController notesController = TextEditingController();
+  List<String> strategies = [];
+
+
+Future<void> _fetchStrategiesFromFirestore() async {
+  try {
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('Strategies')
+        .get();
+
+    final loadedStrategies = querySnapshot.docs
+        .map((doc) => doc['strategy_name'].toString())
+        .toList();
+
+    setState(() {
+      strategies = loadedStrategies;
+
+      final strategyColumn = columns.firstWhere(
+        (column) => column.field == 'strategy',
+      );
+
+      strategyColumn.type = PlutoColumnType.select(strategies);
+    });
+
+    stateManager?.notifyListeners();
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Could not load strategies.')),
+    );
+  }
+}
 
   @override
   void initState() {
-    super.initState();
-    columns = [
+  super.initState();
+  _fetchStrategiesFromFirestore();
+
+  columns = [
       PlutoColumn(
         title: 'Piece',
         field: 'piece',
@@ -42,17 +74,12 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         enableSorting: false,
       ),
       PlutoColumn(
-        title: 'Practice Passage',
-        field: 'passage',
-        type: PlutoColumnType.text(),
-        enableSorting: false,
-      ),
-      PlutoColumn(
-        title: 'Practice Strategy',
-        field: 'strategy',
-        type: PlutoColumnType.text(),
-        enableSorting: false,
-      ),
+      title: 'Practice Strategy',
+      field: 'strategy',
+      type: PlutoColumnType.select(strategies),
+      enableSorting: false,
+  ),
+      
       PlutoColumn(
         title: 'M',
         field: 'mon',
@@ -179,82 +206,53 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
     'createdAt': FieldValue.serverTimestamp(),
   };
 }
+void _removeSelectedVideo() {
+  setState(() {
+    selectedVideoBytes = null;
+    selectedVideoName = null;
+  });
+}
 
 Future<void> _saveSheet() async {
-  print("1 - _saveSheet started");
-
   try {
-    print("2 - checking stateManager");
-
     if (stateManager == null) {
-      print("STOP - stateManager is null");
-
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Grid not ready yet. Try again.'),
-        ),
+        const SnackBar(content: Text('Sheet not saved. Grid is not ready.')),
       );
       return;
     }
 
-    print("3 - stateManager is ready");
-
     String? videoUrl;
 
     if (selectedVideoBytes != null && selectedVideoName != null) {
-      print("4 - video selected: $selectedVideoName");
-
       final storageRef = FirebaseStorage.instance
           .ref()
           .child('music_sheet_videos/$selectedVideoName');
 
-      print("5 - uploading video to storage");
-
       await storageRef.putData(selectedVideoBytes!);
-
-      print("6 - video uploaded");
-
       videoUrl = await storageRef.getDownloadURL();
-
-      print("7 - video URL received: $videoUrl");
-    } else {
-      print("4 - no video selected");
     }
-
-    print("8 - getting sheet data");
 
     final data = _getSheetData();
     data['videoUrl'] = videoUrl;
-
-    print("9 - saving to Firestore");
 
     await FirebaseFirestore.instance
         .collection('music_sheets')
         .add(data);
 
-    print("10 - Firestore save complete");
-
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Sheet and video saved to Firebase!'),
-      ),
+      const SnackBar(content: Text('Sheet saved successfully.')),
     );
-  } catch (e, stackTrace) {
-    print("SAVE SHEET ERROR: $e");
-    print(stackTrace);
-
+  } catch (e) {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Error saving sheet: $e'),
-      ),
+      const SnackBar(content: Text('Sheet not saved. Please try again.')),
     );
   }
 }
-
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -369,15 +367,23 @@ Future<void> _saveSheet() async {
             ),
             if (selectedVideoName != null) ...[
             const SizedBox(height: 10),
+            Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
             Text('Selected: $selectedVideoName'),
-            ],
+            const SizedBox(width: 10),
+            IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red),
+            tooltip: 'Remove selected video',
+            onPressed: _removeSelectedVideo,
+      ),
+    ],
+  ),
+],
             const SizedBox(height: 20),
 
             ElevatedButton.icon(
-              onPressed: () {
-              debugPrint("SAVE BUTTON CLICKED");
-              _saveSheet();
-            },
+              onPressed: _saveSheet,
               icon: const Icon(Icons.save),
               label: const Text('Save Sheet'),
               style: ElevatedButton.styleFrom(
