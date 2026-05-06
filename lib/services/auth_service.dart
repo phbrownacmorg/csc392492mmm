@@ -63,6 +63,45 @@ class AuthService {
     }
   }
 
+  Future<String?> editProfile({
+    required String oldEmail,
+    required String newEmail,
+    required String firstName,
+    required String lastName,
+    required String role,
+    // required String phone,
+  }) async {
+    try {
+      if (newEmail != oldEmail) {
+        await FirebaseAuth.instance.currentUser!.verifyBeforeUpdateEmail(newEmail);
+      }
+      await FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser?.uid)
+        .update({
+          'email': newEmail,
+          'firstName': firstName,
+          'lastName': lastName,
+          'role': role,
+          // 'phone': phone,
+        });
+      return null;
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
+  Future<String?> updatePassword({
+    required String password,
+  }) async {
+    try {
+      await FirebaseAuth.instance.currentUser?.updatePassword(password);
+      return null;
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
   // TODO: Create new function to handle login with Google account
 
   // TODO: Create new function to handle login with Facebook account
@@ -124,9 +163,9 @@ class AuthService {
   //   required String newPassword,
   //   required String email,
   // }) async {
-  //   AuthCredential credential = 
-  //     EmailAuthProvider.credential(email: email, password: currentPassword);
-  //   await currentUser!.reauthenticateWithCredential(credential);
-  //   await currentUser!.updatePassword(newPassword);
+    // AuthCredential credential = 
+    //   EmailAuthProvider.credential(email: email, password: currentPassword);
+    // await currentUser!.reauthenticateWithCredential(credential);
+    // await currentUser!.updatePassword(newPassword);
   // }
 }

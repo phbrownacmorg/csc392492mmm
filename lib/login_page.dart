@@ -121,7 +121,28 @@ class _LoginPageState extends State<LoginPage> {
                   style: TextStyle(fontSize: 18, color: Colors.white),
                 ),
               ),
-              // TODO: Add two stylized buttons for logins with Google and Facebook (don't worry about functionality yet).
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                ),
+                child: Text(
+                  'Login with Google',
+                  style: TextStyle(fontSize: 12, color: Colors.white),
+                ),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                ),
+                child: Text(
+                  'Login with Facebook',
+                  style: TextStyle(fontSize: 12, color: Colors.white),
+                ),
+              ),
               SizedBox(height: 20),
               GestureDetector(
                 onTap: _navigateToRegister,

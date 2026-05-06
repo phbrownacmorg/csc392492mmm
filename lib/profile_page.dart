@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:music_app/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:music_app/edit_profile.dart';
 
 // TODO: Add a way to edit user profile. Possibly, this could take the form of a new account settings page that can be accessed from the profile page. This page would allow important account functions, such as setting a phone number, changing email/password, and deleting an account (though most of the logic would be handled by auth_service.dart).
 
@@ -82,6 +83,28 @@ class _ProfilePageState extends State<ProfilePage> {
       appBar: AppBar(
         title: const Text('Profile', style: TextStyle(color: Colors.white)),
         centerTitle: true,
+        actions: [
+          Padding(
+            padding: EdgeInsets.only(right: 10),
+            child: TextButton(
+              onPressed: _isEnabled
+                ? () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => EditProfile()),
+                  );
+                } : null,
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              child: Text(
+                'Edit Profile',
+                style: TextStyle(color: Colors.black),
+              ),
+            ),
+          ),
+        ],
         backgroundColor: Colors.black,
         iconTheme: IconThemeData(color: Colors.white),
       ),
