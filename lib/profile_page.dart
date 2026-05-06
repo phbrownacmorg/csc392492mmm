@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'main.dart'; // Adjust the import path if your main.dart is in a different folder
+import 'account_settings_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -29,6 +30,16 @@ class ProfilePage extends StatelessWidget {
             Text(
               'Selected Problem: $problem',
               style: const TextStyle(fontSize: 20),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AccountSettingsPage()),
+                );
+              },
+              child: const Text('Account Settings'),
             ),
           ],
         ),
