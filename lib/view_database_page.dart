@@ -7,10 +7,10 @@ class Document{
   final Map<String, dynamic> data;
   Document(this.name, this.data);
 }
-//class to hold the info for a database colection
-class Colection{
-  final String colectionPath;
-  Colection(this.colectionPath, this._documents);
+//class to hold the info for a database collection
+class Collection{
+  final String collectionPath;
+  Collection(this.collectionPath, this._documents);
   List<Document>? _documents;
 }
 
@@ -24,13 +24,13 @@ class DatabaseForm extends StatefulWidget{
 //copy from student form to get something up and running.
 class _CreateDatabaseFormFormState extends State<DatabaseForm> {
   final TextEditingController _nameController = TextEditingController();
-  Colection? _selectedColection;
+  Collection? _selectedCollection;
   Document? _selectedDocument;
   String _documentJson = '';
   //final _formKey = GlobalKey<FormState>();
 
-//temp use strings for database colections untill database collection loading logic is possible.
-  List<Colection> _colections = [Colection('Problems', null),Colection('Solutions', null),Colection('Strategies', null),Colection('users',null),Colection('music_sheets',null)];
+//temp use strings for database collections untill database collection loading logic is possible.
+  List<Collection> _collections = [Collection('Problems', null),Collection('Solutions', null),Collection('Strategies', null),Collection('users',null),Collection('music_sheets',null)];
 //Update when doocument format changes
   Map<String,String> _documentIdTable = {'Problems':'problem_name','Solutions':'strategy_name','Strategies':'strategy_name'};
 
@@ -66,14 +66,14 @@ class _CreateDatabaseFormFormState extends State<DatabaseForm> {
   }*/
   
   Future<void> _fetchDocumentsFromFirestore() async {
-    for (var index = 0; index < _colections.length; index += 1){
-      final querySnapshot = await FirebaseFirestore.instance.collection(_colections[index].colectionPath).get();
-      _colections[index]._documents = querySnapshot.docs.map<Document>((element){
+    for (var index = 0; index < _collections.length; index += 1){
+      final querySnapshot = await FirebaseFirestore.instance.collection(_collections[index].collectionPath).get();
+      _collections[index]._documents = querySnapshot.docs.map<Document>((element){
         final data = element.data();
         String documentName = '';
         //use hash of document as fallback
-        if(_documentIdTable[_colections[index].colectionPath] != null){
-          documentName = data[_documentIdTable[_colections[index].colectionPath]].toString();
+        if(_documentIdTable[_collections[index].collectionPath] != null){
+          documentName = data[_documentIdTable[_collections[index].collectionPath]].toString();
         }
         else{
           documentName = data.hashCode.toString();
@@ -105,25 +105,25 @@ class _CreateDatabaseFormFormState extends State<DatabaseForm> {
             children: [
               SizedBox(width: 20),
               Text(
-               'Colection:'
+               'Collection:'
               ),
-              DropdownButton<Colection>(
-                value: _selectedColection,
-                items: _colections.map((Colection collection) {
-                  return DropdownMenuItem<Colection>(
+              DropdownButton<Collection>(
+                value: _selectedCollection,
+                items: _collections.map((Collection collection) {
+                  return DropdownMenuItem<Collection>(
                     value: collection,
-                    child: Text(collection.colectionPath),
+                    child: Text(collection.collectionPath),
                   );
                 }).toList(),
-                onChanged: (Colection? newValue){
+                onChanged: (Collection? newValue){
                   setState(() {
-                    _selectedColection = newValue;
+                    _selectedCollection = newValue;
                     _selectedDocument = null;
                     _documentJson = '';
                   });
                 },
                 hint: Text(
-                  'Please select a colection'
+                  'Please select a collection'
                 ),
               ),
               SizedBox(width: 20),
@@ -132,7 +132,7 @@ class _CreateDatabaseFormFormState extends State<DatabaseForm> {
               ),
               DropdownButton<Document>(
                 value: _selectedDocument,
-                items: _selectedColection?._documents?.map((Document document) {
+                items: _selectedCollection?._documents?.map((Document document) {
                   return DropdownMenuItem<Document>(
                     value: document,
                     child: Text(document.name),
