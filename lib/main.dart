@@ -8,6 +8,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'profile_page.dart';
+import 'view_database_page.dart';
 
 
 
@@ -114,6 +115,12 @@ class MyHomePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => ViewSheetsPage()),
+                  );
+                }),
+                _buildButton('Debug_Database_Viewer', context, () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ViewDatabaseSheetPage()),
                   );
                 }),
               ],
