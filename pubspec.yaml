@@ -31,6 +31,8 @@ dependencies:
   drift_flutter: ^0.3.0
   email_validator: '^2.1.17'
 
+  google_sign_in: ^7.2.0
+  flutter_facebook_auth: ^7.1.6
 dev_dependencies:
   flutter_test:
     sdk: flutter

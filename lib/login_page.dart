@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
-import 'register_page.dart'; 
+import 'register_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:music_app/services/auth_service.dart';
+import 'package:fancy_password_field/fancy_password_field.dart';
+
+// Eventually: currently, the app prevents a user from logging in after they're
+// already logged in. Make it so the email + password validators are hidden when
+// this happens (i.e., 'Enter your...' doesn't appear.)
+
+// In the future: implement a way to change your email and/or password.
 
 class LoginPage extends StatefulWidget {
   @override
@@ -21,48 +28,47 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _submitLogin() async {
-  if (_formKey.currentState!.validate()) {
-    try {
-      // Login with Firebase Auth
-      UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
-
-      String uid = userCredential.user!.uid;
-
-      // 🗄️ Step 2: Get user role from Firestore
-      var doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
-
-      String role = doc['role'];
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login successful as $role')),
-      );
-
-      //  Navigate based on role
-      if (role == 'teacher') {
-        Navigator.pushReplacementNamed(context, '/teacher');
-      } else {
-        Navigator.pushReplacementNamed(context, '/student');
+    if (_formKey.currentState!.validate() && 
+      FirebaseAuth.instance.currentUser == null) {
+      try {
+        await authService.value.login(
+          email: _emailController.text,
+          password: _passwordController.text,
+        );
+        snackBarMessage('Login successful.');
+        popPage(); // Go back to home page after logging in
+      } on FirebaseAuthException catch (e) {
+        String message;
+        if (e.code == 'invalid-credential') {
+          message = 'Incorrect email or password.';
+        } else if (e.code == 'invalid-email') {
+          message = 'Invalid email address.';
+        } else {
+          message = e.message ?? 'An error occurred.';
+        }
+        snackBarMessage(message);
       }
-
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login failed: $e')),
-      );
+    } else if (FirebaseAuth.instance.currentUser != null) {
+      snackBarMessage('User is already logged in.');
+    } else {
+      snackBarMessage('Something went wrong.');
     }
   }
-}
 
   void _navigateToRegister() {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => RegisterPage()),
+    );
+  }
+
+  void popPage() {
+    Navigator.pop(context);
+  }
+
+  void snackBarMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 
@@ -81,6 +87,80 @@ class _LoginPageState extends State<LoginPage> {
           key: _formKey,
           child: Column(
             children: [
+              SizedBox(height: 24),
+
+    // Divider with "or" label
+    Row(
+      children: [
+        Expanded(child: Divider()),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12),
+          child: Text('or', style: TextStyle(color: Colors.grey)),
+        ),
+        Expanded(child: Divider()),
+      ],
+    ),
+
+    SizedBox(height: 24),
+
+    // Google Button
+    OutlinedButton(
+      onPressed: () {},
+      style: OutlinedButton.styleFrom(
+        backgroundColor: Colors.white,
+        side: BorderSide(color: Colors.grey.shade300),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        padding: EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+        minimumSize: Size(double.infinity, 52),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.Google, size: 24),
+          SizedBox(width: 12),
+          Text(
+            'Continue with Google',
+            style: TextStyle(
+              color: Color(0xFF3C4043),
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ],
+      ),
+    ),
+
+    SizedBox(height: 12),
+
+    // Facebook Button
+    ElevatedButton(
+      onPressed: () {},
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Color(0xFF1877F2),
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        padding: EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+        minimumSize: Size(double.infinity, 52),
+        elevation: 0,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.facebook, color: Colors.white, size: 24),
+          SizedBox(width: 12),
+          Text(
+            'Continue with Facebook',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ],
+      ),
+    ),
+
               TextFormField(
                 controller: _emailController,
                 decoration: InputDecoration(
@@ -91,13 +171,14 @@ class _LoginPageState extends State<LoginPage> {
                     value == null || value.isEmpty ? 'Enter your email' : null,
               ),
               SizedBox(height: 20),
-              TextFormField(
+              FancyPasswordField(
                 controller: _passwordController,
                 decoration: InputDecoration(
                   labelText: 'Password',
                   border: OutlineInputBorder(),
                 ),
-                obscureText: true,
+                hasStrengthIndicator: false,
+                hasShowHidePassword: true,
                 validator: (value) =>
                     value == null || value.isEmpty ? 'Enter your password' : null,
               ),
@@ -113,6 +194,7 @@ class _LoginPageState extends State<LoginPage> {
                   style: TextStyle(fontSize: 18, color: Colors.white),
                 ),
               ),
+              // TODO: Add two stylized buttons for logins with Google and Facebook (don't worry about functionality yet).
               SizedBox(height: 20),
               GestureDetector(
                 onTap: _navigateToRegister,
