@@ -1,8 +1,10 @@
 import 'dart:typed_data';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:music_app/main.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MusicSheetWidget extends StatefulWidget {
@@ -19,6 +21,14 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
   Uint8List? selectedVideoBytes;
   String? selectedVideoName;
   TextEditingController notesController = TextEditingController();
+  TextEditingController worksheetNameController = TextEditingController();
+
+  @override
+  void dispose(){
+    notesController.dispose();
+    worksheetNameController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -135,8 +145,13 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
 
   void _addNewRow() {
     setState(() {
-      rows.add(_createNewPracticeRow());
-      stateManager?.resetCurrentState();
+      final newRow = _createNewPracticeRow();
+
+      stateManager?.appendRows([newRow]);
+      
+      stateManager?.setCurrentCell(newRow.cells['piece'], stateManager!.rows.length -1,);
+
+      stateManager?.setEditing(true);
     });
   }
 
@@ -173,6 +188,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
   }).toList();
 
   return {
+    'worksheetName': _getWorksheetName(),
     'rows': rowData,
     'notes': notesController.text,
     'videoName': selectedVideoName,
@@ -254,6 +270,30 @@ Future<void> _saveSheet() async {
     );
   }
 }
+  //After testing I realized that it would save as guest but I don't think they can see it after saving if they
+  //click out and come back. Unsure if we want to make the guest thing actually work or in the future you would always need
+  //to be a user (leaning towards that so I don't want to change the code to fix it right now.)
+  String _getWorksheetName(){
+    final appState = Provider.of<MyAppState>(context,listen:false);
+    
+    String creatorName;
+
+    if (appState.studentName == null){
+      creatorName = 'Guest';
+    }
+    else{
+      creatorName = appState.studentName!;
+    }
+
+    final datetimenow = DateTime.now();
+    final dateformat = '${datetimenow.month}/${datetimenow.day}/${datetimenow.year}';
+
+    if (worksheetNameController.text.isEmpty){
+      return '$dateformat - $creatorName';
+    }
+
+    return worksheetNameController.text;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -262,6 +302,10 @@ Future<void> _saveSheet() async {
         padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
+            
+            TextField(controller: worksheetNameController, decoration: const InputDecoration(labelText: 'Worksheet Name',
+            hintText: 'Name your worksheet', border: OutlineInputBorder())),
+
             Container(
               height: 500,
               decoration: BoxDecoration(
