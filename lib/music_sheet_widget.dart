@@ -1,365 +1,389 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:typed_data';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:pluto_grid/pluto_grid.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ViewSheetsPage extends StatefulWidget {
-  const ViewSheetsPage({super.key});
+class MusicSheetWidget extends StatefulWidget {
+  const MusicSheetWidget({super.key});
 
   @override
-  State<ViewSheetsPage> createState() => _ViewSheetsPageState();
+  State<MusicSheetWidget> createState() => _MusicSheetWidgetState();
 }
 
-class _ViewSheetsPageState extends State<ViewSheetsPage> {
-  final TextEditingController _searchController = TextEditingController();
+class _MusicSheetWidgetState extends State<MusicSheetWidget> {
+  late List<PlutoColumn> columns;
+  late List<PlutoRow> rows;
+  PlutoGridStateManager? stateManager;
 
-  String _searchText = '';
-  bool _showAllSheets = false;
+  Uint8List? selectedVideoBytes;
+  String? selectedVideoName;
+
+  final TextEditingController notesController = TextEditingController();
+  final TextEditingController worksheetNameController = TextEditingController();
+
+  List<String> strategies = [];
 
   @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+
+    columns = [
+      PlutoColumn(
+        title: 'Piece',
+        field: 'piece',
+        type: PlutoColumnType.text(),
+        enableSorting: false,
+      ),
+      PlutoColumn(
+        title: 'Tempo',
+        field: 'tempo',
+        type: PlutoColumnType.number(),
+        enableSorting: false,
+      ),
+      PlutoColumn(
+        title: 'Practice Passage',
+        field: 'passage',
+        type: PlutoColumnType.text(),
+        enableSorting: false,
+      ),
+      PlutoColumn(
+        title: 'Practice Strategy',
+        field: 'strategy',
+        type: PlutoColumnType.select(strategies),
+        enableSorting: false,
+      ),
+      PlutoColumn(
+        title: 'M',
+        field: 'mon',
+        type: PlutoColumnType.number(),
+        width: 50,
+        enableSorting: false,
+      ),
+      PlutoColumn(
+        title: 'T',
+        field: 'tue',
+        type: PlutoColumnType.number(),
+        width: 50,
+        enableSorting: false,
+      ),
+      PlutoColumn(
+        title: 'W',
+        field: 'wed',
+        type: PlutoColumnType.number(),
+        width: 50,
+        enableSorting: false,
+      ),
+      PlutoColumn(
+        title: 'H',
+        field: 'thu',
+        type: PlutoColumnType.number(),
+        width: 50,
+        enableSorting: false,
+      ),
+      PlutoColumn(
+        title: 'F',
+        field: 'fri',
+        type: PlutoColumnType.number(),
+        width: 50,
+        enableSorting: false,
+      ),
+      PlutoColumn(
+        title: 'Sat',
+        field: 'sat',
+        type: PlutoColumnType.number(),
+        width: 70,
+        enableSorting: false,
+      ),
+      PlutoColumn(
+        title: 'Sun',
+        field: 'sun',
+        type: PlutoColumnType.number(),
+        width: 70,
+        enableSorting: false,
+      ),
+      PlutoColumn(
+        title: 'Mastery',
+        field: 'mastery',
+        type: PlutoColumnType.select(['Mastered', 'Not Mastered']),
+        width: 120,
+        enableSorting: false,
+      ),
+    ];
+
+    rows = [
+      _createNewPracticeRow(),
+    ];
+
+    _fetchStrategiesFromFirestore();
   }
 
-  Stream<QuerySnapshot<Map<String, dynamic>>> _getSheetsStream() {
-    final currentUser = FirebaseAuth.instance.currentUser;
+  Future<void> _fetchStrategiesFromFirestore() async {
+    try {
+      final querySnapshot =
+          await FirebaseFirestore.instance.collection('Strategies').get();
 
-    Query<Map<String, dynamic>> query =
-        FirebaseFirestore.instance.collection('music_sheets');
+      final loadedStrategies = querySnapshot.docs
+          .map((doc) => doc['strategy_name'].toString())
+          .toList();
 
-    if (currentUser != null && !_showAllSheets) {
-      query = query.where('userId', isEqualTo: currentUser.uid);
-    }
+      setState(() {
+        strategies = loadedStrategies;
 
-    return query.orderBy('createdAt', descending: true).snapshots();
-  }
-
-  bool _sheetMatchesSearch(Map<String, dynamic> data) {
-    if (_searchText.trim().isEmpty) {
-      return true;
-    }
-
-    final search = _searchText.toLowerCase();
-
-    final sheetName = data['sheetName']?.toString().toLowerCase() ?? '';
-    final studentName = data['studentName']?.toString().toLowerCase() ?? '';
-    final creatorEmail = data['creatorEmail']?.toString().toLowerCase() ?? '';
-    final notes = data['notes']?.toString().toLowerCase() ?? '';
-
-    if (sheetName.contains(search) ||
-        studentName.contains(search) ||
-        creatorEmail.contains(search) ||
-        notes.contains(search)) {
-      return true;
-    }
-
-    final rows = data['rows'];
-
-    if (rows is List) {
-      for (final row in rows) {
-        if (row is Map) {
-          final piece = row['piece']?.toString().toLowerCase() ?? '';
-          final passage = row['passage']?.toString().toLowerCase() ?? '';
-          final strategy = row['strategy']?.toString().toLowerCase() ?? '';
-          final mastery = row['mastery']?.toString().toLowerCase() ?? '';
-
-          if (piece.contains(search) ||
-              passage.contains(search) ||
-              strategy.contains(search) ||
-              mastery.contains(search)) {
-            return true;
-          }
-
-          final problems = row['problems'];
-
-          if (problems is List) {
-            for (final problem in problems) {
-              if (problem.toString().toLowerCase().contains(search)) {
-                return true;
-              }
-            }
-          }
-        }
-      }
-    }
-
-    return false;
-  }
-
-  Future<void> _deleteSheet(String documentId) async {
-    await FirebaseFirestore.instance
-        .collection('music_sheets')
-        .doc(documentId)
-        .delete();
-
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Sheet deleted')),
-    );
-  }
-
-  Future<void> _confirmDelete(String documentId) async {
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Delete Sheet'),
-          content: const Text('Are you sure you want to delete this sheet?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Delete'),
-            ),
-          ],
+        final strategyColumn = columns.firstWhere(
+          (column) => column.field == 'strategy',
         );
-      },
-    );
 
-    if (shouldDelete == true) {
-      await _deleteSheet(documentId);
-    }
-  }
-
-  Future<void> _renameSheet(
-    String documentId,
-    String currentSheetName,
-  ) async {
-    final controller = TextEditingController(text: currentSheetName);
-
-    final newName = await showDialog<String>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Rename Sheet'),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              labelText: 'Sheet Name',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, controller.text.trim()),
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (newName != null && newName.isNotEmpty) {
-      await FirebaseFirestore.instance
-          .collection('music_sheets')
-          .doc(documentId)
-          .update({
-        'sheetName': newName,
-        'updatedAt': FieldValue.serverTimestamp(),
+        strategyColumn.type = PlutoColumnType.select(strategies);
       });
 
-      if (!mounted) return;
-
+      stateManager?.notifyListeners();
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sheet updated')),
+        const SnackBar(content: Text('Could not load strategies.')),
       );
     }
   }
 
-  Widget _buildRowsPreview(List<dynamic> rows) {
-    if (rows.isEmpty) {
-      return const Text('No passage rows found.');
-    }
-
-    return Column(
-      children: rows.map((row) {
-        if (row is! Map) {
-          return const SizedBox.shrink();
-        }
-
-        final problems = row['problems'];
-
-        return Container(
-          width: double.infinity,
-          margin: const EdgeInsets.only(top: 8),
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Piece: ${row['piece'] ?? ''}'),
-              Text('Passage: ${row['passage'] ?? ''}'),
-              Text('Tempo: ${row['tempo'] ?? ''}'),
-              Text('Strategy: ${row['strategy'] ?? ''}'),
-              Text('Mastery: ${row['mastery'] ?? ''}'),
-              Text(
-                'Problems: ${problems is List ? problems.join(', ') : ''}',
-              ),
-              Text(
-                'Days: M ${row['mon'] ?? 0}, T ${row['tue'] ?? 0}, W ${row['wed'] ?? 0}, H ${row['thu'] ?? 0}, F ${row['fri'] ?? 0}, Sat ${row['sat'] ?? 0}, Sun ${row['sun'] ?? 0}',
-              ),
-              if (row['videoUrl'] != null)
-                const Text(
-                  'Video attached',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-            ],
-          ),
-        );
-      }).toList(),
+  PlutoRow _createNewPracticeRow() {
+    return PlutoRow(
+      cells: {
+        'piece': PlutoCell(value: ''),
+        'tempo': PlutoCell(value: 80),
+        'passage': PlutoCell(value: ''),
+        'strategy': PlutoCell(value: ''),
+        'mon': PlutoCell(value: 0),
+        'tue': PlutoCell(value: 0),
+        'wed': PlutoCell(value: 0),
+        'thu': PlutoCell(value: 0),
+        'fri': PlutoCell(value: 0),
+        'sat': PlutoCell(value: 0),
+        'sun': PlutoCell(value: 0),
+        'mastery': PlutoCell(value: 'Not Mastered'),
+      },
     );
   }
 
-  Widget _buildSheetCard(
-    String documentId,
-    Map<String, dynamic> data,
-  ) {
-    final rows = data['rows'];
-    final createdAt = data['createdAt'];
+  void _addNewRow() {
+    setState(() {
+      final newRow = _createNewPracticeRow();
+      rows.add(newRow);
+      stateManager?.appendRows([newRow]);
+    });
+  }
 
-    String createdDateText = '';
+  Future<void> _pickVideo() async {
+    FilePickerResult? result = await FilePicker.pickFiles(
+      type: FileType.video,
+      withData: true,
+    );
 
-    if (createdAt is Timestamp) {
-      createdDateText = createdAt.toDate().toString();
+    if (result != null) {
+      setState(() {
+        selectedVideoBytes = result.files.single.bytes;
+        selectedVideoName = result.files.single.name;
+      });
+    }
+  }
+
+  void _removeSelectedVideo() {
+    setState(() {
+      selectedVideoBytes = null;
+      selectedVideoName = null;
+    });
+  }
+
+  String _getWorksheetName() {
+    if (worksheetNameController.text.trim().isNotEmpty) {
+      return worksheetNameController.text.trim();
     }
 
-    final sheetName = data['sheetName']?.toString() ?? 'Untitled Sheet';
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final now = DateTime.now();
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: ExpansionTile(
-        title: Text(sheetName),
-        subtitle: Text(
-          'Student: ${data['studentName'] ?? ''}\nCreated: $createdDateText',
-        ),
-        childrenPadding: const EdgeInsets.all(16),
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text('Creator: ${data['creatorEmail'] ?? ''}'),
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text('Notes: ${data['notes'] ?? ''}'),
-          ),
-          const SizedBox(height: 12),
-          _buildRowsPreview(rows is List ? rows : []),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton.icon(
-                onPressed: () => _renameSheet(documentId, sheetName),
-                icon: const Icon(Icons.edit),
-                label: const Text('Rename'),
-              ),
-              TextButton.icon(
-                onPressed: () => _confirmDelete(documentId),
-                icon: const Icon(Icons.delete, color: Colors.red),
-                label: const Text('Delete'),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+    return 'Music Sheet - ${now.month}/${now.day}/${now.year} - ${currentUser?.email ?? 'Guest'}';
+  }
+
+  Map<String, dynamic> _getSheetData() {
+    final gridRows = stateManager?.rows ?? rows;
+
+    final rowData = gridRows.map((row) {
+      return {
+        'piece': row.cells['piece']?.value,
+        'tempo': row.cells['tempo']?.value,
+        'passage': row.cells['passage']?.value,
+        'strategy': row.cells['strategy']?.value,
+        'mon': row.cells['mon']?.value,
+        'tue': row.cells['tue']?.value,
+        'wed': row.cells['wed']?.value,
+        'thu': row.cells['thu']?.value,
+        'fri': row.cells['fri']?.value,
+        'sat': row.cells['sat']?.value,
+        'sun': row.cells['sun']?.value,
+        'mastery': row.cells['mastery']?.value,
+      };
+    }).toList();
+
+    return {
+      'sheetName': _getWorksheetName(),
+      'rows': rowData,
+      'notes': notesController.text.trim(),
+      'videoName': selectedVideoName,
+      'createdAt': FieldValue.serverTimestamp(),
+    };
+  }
+
+  Future<void> _saveSheet() async {
+    try {
+      if (stateManager == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Grid not ready yet. Try again.')),
+        );
+        return;
+      }
+
+      String? videoUrl;
+
+      if (selectedVideoBytes != null && selectedVideoName != null) {
+        final storageRef = FirebaseStorage.instance
+            .ref()
+            .child('music_sheet_videos/$selectedVideoName');
+
+        await storageRef.putData(selectedVideoBytes!);
+        videoUrl = await storageRef.getDownloadURL();
+      }
+
+      final data = _getSheetData();
+      data['videoUrl'] = videoUrl;
+
+      final currentUser = FirebaseAuth.instance.currentUser;
+
+      if (currentUser != null) {
+        data['userId'] = currentUser.uid;
+        data['creatorEmail'] = currentUser.email;
+      }
+
+      await FirebaseFirestore.instance.collection('music_sheets').add(data);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sheet saved successfully.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sheet not saved. Please try again.')),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    notesController.dispose();
+    worksheetNameController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = FirebaseAuth.instance.currentUser;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('View Sheets'),
-        centerTitle: true,
-        backgroundColor: Colors.deepOrange,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
-            if (currentUser != null)
-              SwitchListTile(
-                title: const Text('Show all sheets'),
-                subtitle: const Text(
-                  'Off = only sheets saved by the current user',
-                ),
-                value: _showAllSheets,
-                onChanged: (value) {
-                  setState(() {
-                    _showAllSheets = value;
-                  });
-                },
-              )
-            else
-              const Text(
-                'No user is logged in, so all sheets are shown.',
-              ),
-
-            const SizedBox(height: 10),
-
             TextField(
-              controller: _searchController,
+              controller: worksheetNameController,
               decoration: const InputDecoration(
-                labelText: 'Search by student, sheet, piece, problem, or strategy',
+                labelText: 'Worksheet Name',
+                hintText: 'Name your worksheet',
                 border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.search),
               ),
-              onChanged: (value) {
-                setState(() {
-                  _searchText = value;
-                });
-              },
             ),
-
             const SizedBox(height: 20),
-
-            Expanded(
-              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                stream: _getSheetsStream(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return Text('Error loading sheets: ${snapshot.error}');
-                  }
-
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  final docs = snapshot.data?.docs ?? [];
-
-                  final filteredDocs = docs.where((doc) {
-                    return _sheetMatchesSearch(doc.data());
-                  }).toList();
-
-                  if (filteredDocs.isEmpty) {
-                    return const Center(
-                      child: Text('No sheets found.'),
-                    );
-                  }
-
-                  return ListView(
-                    children: filteredDocs.map((doc) {
-                      return _buildSheetCard(
-                        doc.id,
-                        doc.data(),
-                      );
-                    }).toList(),
-                  );
-                },
+            Container(
+              height: 500,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey),
+              ),
+              child: PlutoGrid(
+                columns: columns,
+                rows: rows,
+                onLoaded: (event) => stateManager = event.stateManager,
+                configuration: PlutoGridConfiguration(
+                  style: PlutoGridStyleConfig(
+                    borderColor: Colors.grey,
+                    gridBorderColor: Colors.grey,
+                  ),
+                  columnFilter: PlutoGridColumnFilterConfig(),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: notesController,
+              decoration: const InputDecoration(
+                labelText: 'Notes',
+                hintText: 'Enter your notes here...',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 5,
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _addNewRow,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add New Row'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepOrange,
+                  ),
+                ),
+                const SizedBox(width: 20),
+                ElevatedButton.icon(
+                  onPressed: _pickVideo,
+                  icon: const Icon(Icons.video_library),
+                  label: const Text('Upload Video'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepOrange,
+                  ),
+                ),
+              ],
+            ),
+            if (selectedVideoName != null) ...[
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Text(
+                      'Selected: $selectedVideoName',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    tooltip: 'Remove selected video',
+                    onPressed: _removeSelectedVideo,
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: _saveSheet,
+              icon: const Icon(Icons.save),
+              label: const Text('Save Sheet'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
               ),
             ),
           ],
