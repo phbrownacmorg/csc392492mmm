@@ -362,6 +362,7 @@ class _StudentFormState extends State<StudentForm> {
         'notes': _notesController.text.trim(),
         'rows': rowData,
         'creatorEmail': currentUser?.email,
+        'userId': currentUser?.uid,
         'createdAt': FieldValue.serverTimestamp(),
       });
 
