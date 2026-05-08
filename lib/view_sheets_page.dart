@@ -425,6 +425,7 @@ class _EditSheetPageState extends State<EditSheetPage> {
 
   List<EditRowData> editableRows = [];
   List<String> availableProblems = [];
+  List<String> availableStrategies = [];
 
   @override
   void initState() {
@@ -443,6 +444,8 @@ class _EditSheetPageState extends State<EditSheetPage> {
     );
 
     _fetchProblemsFromFirestore();
+    _fetchStrategiesFromFirestore();
+  
 
     final rows = widget.sheetData['rows'];
 
@@ -474,6 +477,7 @@ class _EditSheetPageState extends State<EditSheetPage> {
       }
     }
   }
+
 Future<void> _fetchProblemsFromFirestore() async {
   final querySnapshot =
       await FirebaseFirestore.instance.collection('Problems').get();
@@ -484,6 +488,19 @@ Future<void> _fetchProblemsFromFirestore() async {
 
   setState(() {
     availableProblems = problems;
+  });
+}
+
+Future<void> _fetchStrategiesFromFirestore() async {
+  final querySnapshot =
+      await FirebaseFirestore.instance.collection('Strategies').get();
+
+  final strategies = querySnapshot.docs
+      .map((doc) => doc['strategy_name'].toString())
+      .toList();
+
+  setState(() {
+    availableStrategies = strategies;
   });
 }
 
@@ -584,13 +601,26 @@ Future<void> _fetchProblemsFromFirestore() async {
               ),
             ),
             const SizedBox(height: 20),
-            TextField(
-              controller: row.strategyController,
-              decoration: const InputDecoration(
-                labelText: 'Strategy',
-                border: OutlineInputBorder(),
-              ),
-            ),
+            DropdownButtonFormField<String>(
+  decoration: const InputDecoration(
+    labelText: 'Strategy',
+    border: OutlineInputBorder(),
+  ),
+  value: availableStrategies.contains(row.strategyController.text)
+      ? row.strategyController.text
+      : null,
+  items: availableStrategies.map((strategy) {
+    return DropdownMenuItem<String>(
+      value: strategy,
+      child: Text(strategy),
+    );
+  }).toList(),
+  onChanged: (value) {
+    setState(() {
+      row.strategyController.text = value ?? '';
+    });
+  },
+),
             const SizedBox(height: 20),
             TextField(
               controller: row.masteryController,
