@@ -13,12 +13,12 @@ class EditProfile extends StatefulWidget {
 class _EditProfileState extends State<EditProfile> {
   final _profileFormKey = GlobalKey<FormState>();
   final _passFormKey = GlobalKey<FormState>();
+  String role = '[Not Logged In]';
   String firstName = 'Guest';
   String lastName = '';
   String oldEmail = '[Not Logged In]';
-  String myInstructor = '[Not Logged In]';
-  String role = '[Not Logged In]';
-  String phone = '';
+  String oldPhone = '';
+  String myInstructors = '[Not Logged In]';
   String? phoneISO = '';
   String? phoneDialCode = '';
   String _formattedPhone = '';
@@ -42,23 +42,28 @@ class _EditProfileState extends State<EditProfile> {
   Future<void> _loadProfile() async {
     final data = await AuthService().getUserData();
     if (data != null) {
+      print('Profile data is not null.');
       setState(() {
+        role = data['role'];
         firstName = data['firstName'];
         lastName = data['lastName'];
         oldEmail = data['email'];
-        myInstructor = data['myInstructor'] ?? '[No Instructor Set]';
-        role = data['role'];
-        phone = data['phone'] ?? '';
+        oldPhone = data['phone'] ?? '';
+        myInstructors = data['myInstructors'] ?? '[No Instructor Set]';
       });
-      final phoneInfo = await PhoneNumber.getRegionInfoFromPhoneNumber(phone);
-      phoneISO = phoneInfo.isoCode;
-      phoneDialCode = phoneInfo.dialCode;
+      if (oldPhone != '') {
+        final phoneInfo = await PhoneNumber.getRegionInfoFromPhoneNumber(oldPhone);
+        phoneISO = phoneInfo.isoCode;
+        phoneDialCode = phoneInfo.dialCode;
+      }
       _firstNameController = TextEditingController(text: firstName);
       _lastNameController = TextEditingController(text: lastName);
       _roleController = TextEditingController(text: role);
       _emailController = TextEditingController(text: oldEmail);
       _passTextController = TextEditingController();
       _passwordController = FancyPasswordController();
+    } else {
+      print('Profile data is null.');
     }
   }
 
@@ -75,13 +80,24 @@ class _EditProfileState extends State<EditProfile> {
 
   Future<void> _saveChanges() async {
     final newEmail = _emailController.text.toLowerCase();
+    final newPhone = _formattedPhone;
+    // Is the email already in use?
     bool emailExists;
     if (newEmail == oldEmail) {
       emailExists = false;
     } else {
-      emailExists = await authService.value.doesEmailExist(_emailController.text.toLowerCase());
+      emailExists = await authService.value.doesEmailExist(newEmail);
     }
+    // Is the phone number already in use?
+    bool phoneExists;
+    if (newPhone == oldPhone) {
+      phoneExists = true;
+    } else {
+      phoneExists = await authService.value.doesPhoneExist(newPhone);
+    }
+    // Are the attempted changes valid?
     if (_profileFormKey.currentState!.validate() && !emailExists) {
+      // Try to save changes on Firebase and Firestore
       try {
         await authService.value.editProfile(
           role: _roleController.text,
@@ -89,8 +105,17 @@ class _EditProfileState extends State<EditProfile> {
           newEmail: newEmail,
           firstName: _firstNameController.text,
           lastName: _lastNameController.text,
-          phone: _formattedPhone,
+          phone: newPhone,
         );
+        if (newEmail != oldEmail && newEmail != '') {
+          authService.value.updateEmail(email: newEmail);
+          snackBarMessage('Please check your inbox to verify your new email address');
+        }
+        // If the phone number changed, verify the new number on Firebase
+        if (!phoneExists && newPhone != '') {
+          // TODO: add phone number as a new sign-in provider on Firebase console
+          authService.value.verifyPhone(phone: newPhone);
+        }
         snackBarMessage('Your changes have been saved.');
         popPage();
       } on FirebaseAuthException catch (e) {
@@ -221,7 +246,7 @@ class _EditProfileState extends State<EditProfile> {
                 SizedBox(height: 20),
                 InternationalPhoneNumberInput(  /// Optional: Add Phone Number
                   initialValue: PhoneNumber(
-                    phoneNumber: phone,
+                    phoneNumber: oldPhone,
                     isoCode: phoneISO,
                     dialCode: phoneDialCode,
                   ),

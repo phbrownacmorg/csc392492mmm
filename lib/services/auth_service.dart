@@ -7,6 +7,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 
 ValueNotifier<AuthService> authService = ValueNotifier(AuthService());
 
@@ -126,10 +127,65 @@ class AuthService {
     return snapshot.docs.isNotEmpty;
   }
 
+  Future<bool> doesPhoneExist(String phone) async {
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+      .collection('users')
+      .where('phone', isEqualTo: phone)
+      .get();
+    return snapshot.docs.isNotEmpty;
+  }
+
   Future<void> signOut() async {
     await firebaseAuth.signOut();
   }
 
+  Future<void> updateEmail({
+    required String email,
+  }) async {
+    await firebaseAuth.currentUser!.verifyBeforeUpdateEmail(email);
+  }
+
+  Future<String?> verifyPhone({
+    required String phone,
+    }) async {
+      try {
+        // final RecaptchaVerifier verifier = RecaptchaVerifier(
+        //   auth: FirebaseAuthPlatform.instance,
+        // );
+
+        await firebaseAuth.verifyPhoneNumber(
+          phoneNumber: phone,
+          verificationCompleted: (PhoneAuthCredential credential) async {
+            await firebaseAuth.currentUser?.linkWithCredential(credential);
+          }, 
+          verificationFailed: (FirebaseAuthException e) {
+            print('Auth Error Code: ${e.code}');
+            print('Auth Error Message: ${e.message}');
+          }, 
+          codeSent: (String verificationId, int? resendToken) async {
+            String smsCode = 'xxxx';
+            PhoneAuthCredential credential = PhoneAuthProvider.credential(
+              verificationId: verificationId, 
+              smsCode: smsCode
+            );
+            await firebaseAuth.signInWithCredential(credential);
+          }, 
+          timeout: const Duration(seconds: 60),
+          codeAutoRetrievalTimeout: (String verificationId) {
+          },
+        );
+      } catch (e) {
+        print('');
+      }
+      return null;
+    }
+
+  // Future<void> verifyPhone(String phone) async {
+  //   final RecaptchaVerifier verifier = RecaptchaVerifier(
+  //     auth: FirebaseAuthPlatform.instance,
+  //     provider: 
+  //     )
+  // }
 
 
   // Everything below is other functions from Flutter Mapp. We can either use them
