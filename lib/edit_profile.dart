@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fancy_password_field/fancy_password_field.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:email_validator/email_validator.dart';
+import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:music_app/services/auth_service.dart';
 
 class EditProfile extends StatefulWidget {
@@ -17,9 +18,13 @@ class _EditProfileState extends State<EditProfile> {
   String oldEmail = '[Not Logged In]';
   String myInstructor = '[Not Logged In]';
   String role = '[Not Logged In]';
-  String phone = '[Not Logged In]';
+  String phone = '';
+  String? phoneISO = '';
+  String? phoneDialCode = '';
+  String _formattedPhone = '';
   bool _isChecked = false;
   bool _deleteButton = false;
+  bool _isPhoneValid = false;
 
   @override
   void initState() {
@@ -43,14 +48,17 @@ class _EditProfileState extends State<EditProfile> {
         oldEmail = data['email'];
         myInstructor = data['myInstructor'] ?? '[No Instructor Set]';
         role = data['role'];
-        phone = data['phone'] ?? '[No Phone Number Set]';
+        phone = data['phone'] ?? '';
       });
-    _firstNameController = TextEditingController(text: firstName);
-    _lastNameController = TextEditingController(text: lastName);
-    _roleController = TextEditingController(text: role);
-    _emailController = TextEditingController(text: oldEmail);
-    _passTextController = TextEditingController();
-    _passwordController = FancyPasswordController();
+      final phoneInfo = await PhoneNumber.getRegionInfoFromPhoneNumber(phone);
+      phoneISO = phoneInfo.isoCode;
+      phoneDialCode = phoneInfo.dialCode;
+      _firstNameController = TextEditingController(text: firstName);
+      _lastNameController = TextEditingController(text: lastName);
+      _roleController = TextEditingController(text: role);
+      _emailController = TextEditingController(text: oldEmail);
+      _passTextController = TextEditingController();
+      _passwordController = FancyPasswordController();
     }
   }
 
@@ -76,11 +84,12 @@ class _EditProfileState extends State<EditProfile> {
     if (_profileFormKey.currentState!.validate() && !emailExists) {
       try {
         await authService.value.editProfile(
+          role: _roleController.text,
           oldEmail: oldEmail,
           newEmail: newEmail,
           firstName: _firstNameController.text,
           lastName: _lastNameController.text,
-          role: _roleController.text,
+          phone: _formattedPhone,
         );
         snackBarMessage('Your changes have been saved.');
         popPage();
@@ -167,12 +176,6 @@ class _EditProfileState extends State<EditProfile> {
                     DropdownMenuEntry(value: 'Student', label: 'Student'),
                     DropdownMenuEntry(value: 'Instructor', label: 'Instructor'),
                   ],
-                  validator: (last) {
-                    if (last == null || last.isEmpty) {
-                      return 'Select a user role';
-                    }
-                    return null;
-                  },
                 ),
                 SizedBox(height: 20),
                 TextFormField(  /// Enter First Name
@@ -211,11 +214,47 @@ class _EditProfileState extends State<EditProfile> {
                   ),
                   keyboardType: TextInputType.emailAddress,
                   autofillHints: [AutofillHints.email],
-                  // Validator only checks email syntax; there should also be a check
-                  // to make sure an email isn't already in use.
                   validator: (email) => EmailValidator.validate(email ?? "")
                     ? null
                     : 'Enter a valid email',
+                ),
+                SizedBox(height: 20),
+                InternationalPhoneNumberInput(  /// Optional: Add Phone Number
+                  initialValue: PhoneNumber(
+                    phoneNumber: phone,
+                    isoCode: phoneISO,
+                    dialCode: phoneDialCode,
+                  ),
+                  onInputChanged: (PhoneNumber number) {
+                    _formattedPhone = number.phoneNumber ?? '';
+                  },
+                  onInputValidated: (bool value) {
+                    _isPhoneValid = value;
+                  },
+                  // autoValidateMode: AutovalidateMode.always,
+                  countries: ['US', 'CA', 'MX'],  // Can add more countries later
+                  selectorConfig: SelectorConfig(
+                    selectorType: PhoneInputSelectorType.DROPDOWN,
+                    setSelectorButtonAsPrefixIcon: true,
+                    trailingSpace: false,
+                    showFlags: true,
+                    useEmoji: true,
+                  ),
+                  inputDecoration: InputDecoration(
+                    hintText: '[OPTIONAL] Phone Number',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.phone,
+                  autofillHints: [AutofillHints.telephoneNumberLocalPrefix],
+                  validator: (phone) {
+                    if (phone == null || phone.isEmpty) {
+                      return null;
+                    } else if (!_isPhoneValid) {
+                      return 'Invalid phone number.';
+                    } else {
+                      return null;
+                    }
+                  },
                 ),
                 SizedBox(height: 20),
                 ElevatedButton(

@@ -48,8 +48,8 @@ class AuthService {
           'lastName': lastName,
           'role': role,
           // Everything below is NOT required during registration!
-          'phone': null, // Add ability to add # to an eventual profile editor 
-          'myInstructor': null,
+          'phone': null,
+          'myInstructors': [],
           'problems': [],
           'assignedSheets': [],
           'completedSheets': [],
@@ -69,7 +69,7 @@ class AuthService {
     required String firstName,
     required String lastName,
     required String role,
-    // required String phone,
+    required String phone,
   }) async {
     try {
       if (newEmail != oldEmail) {
@@ -83,7 +83,7 @@ class AuthService {
           'firstName': firstName,
           'lastName': lastName,
           'role': role,
-          // 'phone': phone,
+          'phone': phone,
         });
       return null;
     } catch (e) {

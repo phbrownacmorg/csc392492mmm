@@ -140,8 +140,6 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 keyboardType: TextInputType.emailAddress,
                 autofillHints: [AutofillHints.email],
-                // Validator only checks email syntax; there should also be a check
-                // to make sure an email isn't already in use.
                 validator: (email) => EmailValidator.validate(email ?? "")
                   ? null
                   : 'Enter a valid email',

@@ -3,8 +3,6 @@ import 'package:music_app/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:music_app/edit_profile.dart';
 
-// TODO: Add a way to edit user profile. Possibly, this could take the form of a new account settings page that can be accessed from the profile page. This page would allow important account functions, such as setting a phone number, changing email/password, and deleting an account (though most of the logic would be handled by auth_service.dart).
-
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
@@ -16,7 +14,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String firstName = 'Guest';
   String lastName = '';
   String email = '[Not Logged In]';
-  String myInstructor = '[Not Logged In]';
+  String myInstructors = '[Not Logged In]';
   String role = '[Not Logged In]';
   String phone = '[Not Logged In]';
   bool _isEnabled = false;
@@ -56,7 +54,7 @@ class _ProfilePageState extends State<ProfilePage> {
         firstName = data['firstName'];
         lastName = data['lastName'];
         email = data['email'];
-        myInstructor = data['myInstructor'] ?? '[No Instructor Set]';
+        myInstructors = data['myInstructors'] ?? '[No Instructors Set]';
         role = data['role'];
         phone = data['phone'] ?? '[No Phone Number Set]';
       });
@@ -129,7 +127,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             SizedBox(height: 10),
             Text(
-              'My Instructor: $myInstructor',
+              'My Instructors: $myInstructors',
               style: const TextStyle(fontSize: 20),
             ),
             SizedBox(height: 10),
