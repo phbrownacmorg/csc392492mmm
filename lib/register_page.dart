@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fancy_password_field/fancy_password_field.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:email_validator/email_validator.dart';
+import 'package:music_app/services/auth_service.dart';
 
 class RegisterPage extends StatefulWidget {
   @override
@@ -10,129 +10,291 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+
   final _formKey = GlobalKey<FormState>();
 
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _roleController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _fullnameController = TextEditingController();
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _passwordTextController = TextEditingController();
+  final TextEditingController _passTextController = TextEditingController();
 
   final FancyPasswordController _passwordController =
       FancyPasswordController();
 
+  
+  // Tracks whether registration is currently happening.
+  // This prevents users from spamming the register button.
+  bool _isLoading = false;
+
   @override
   void dispose() {
+
+    // ✅ GOOD PRACTICE
+    // Dispose controllers when page is removed from memory.
+    // Prevents memory leaks.
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _roleController.dispose();
     _emailController.dispose();
-    _fullnameController.dispose();
-    _usernameController.dispose();
-    _passwordTextController.dispose();
+    _passTextController.dispose();
     _passwordController.dispose();
+
     super.dispose();
   }
 
-  // REGISTER FUNCTION
-  Future<void> registerUser() async {
-    if (!_formKey.currentState!.validate()) return;
+  Future<void> _submitRegister() async {
+
+    
+    // Extra protection against multiple clicks.
+    // If already loading, stop immediately.
+    if (_isLoading) return;
+
+    
+    // Turn loading ON before async work starts.
+    setState(() => _isLoading = true);
+
+    
+    // Validate form BEFORE contacting Firebase.
+    //
+    // WHY?
+    // Without this:
+    // - Firebase gets contacted even if fields are empty
+    // - unnecessary network requests happen
+    // - slower app
+    //
+    // This is more efficient and professional.
+    if (!_formKey.currentState!.validate()) {
+
+      
+      // If validation fails, stop loading immediately.
+      // Otherwise button would stay disabled forever.
+      setState(() => _isLoading = false);
+
+      return;
+    }
 
     try {
-      //  Create user
-      UserCredential userCredential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordTextController.text.trim(),
-      );
 
-      String uid = userCredential.user!.uid;
+      // Checks if email already exists in Firebase.
+      final emailExists = await authService.value
+          .doesEmailExist(_emailController.text.toLowerCase());
 
-      //  Save user profile + ROLE
-      await FirebaseFirestore.instance.collection('users').doc(uid).set({
-        'fullname': _fullnameController.text.trim(),
-        'username': _usernameController.text.trim(),
-        'email': _emailController.text.trim(),
-        'role': 'student',
-        'createdAt': Timestamp.now(),
-      });
+      if (!emailExists) {
 
-      // Success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Registration successful')),
-      );
+        // Creates Firebase account.
+        await authService.value.createAccount(
+          email: _emailController.text.toLowerCase(),
 
-      //  Go back to login
-      Navigator.pop(context);
+          password: _passTextController.text,
+
+          firstName: _firstNameController.text,
+
+          lastName: _lastNameController.text,
+
+          role: _roleController.text,
+        );
+
+        // Success message shown to user.
+        snackBarMessage('Registration successful');
+
+        // Go back to login page after registering.
+        popPage();
+
+      } else {
+
+        // If email already exists.
+        snackBarMessage(
+          'An account already exists for that email.',
+        );
+      }
 
     } on FirebaseAuthException catch (e) {
+
+      // Handles Firebase-specific errors.
       String message;
 
       if (e.code == 'email-already-in-use') {
+
+        // Won't work — we have Firebase
+        // email enumeration protection enabled
         message = 'An account already exists for that email.';
+
       } else if (e.code == 'weak-password') {
+
         message = 'The password provided is too weak.';
+
       } else {
+
+        // Generic Firebase error.
         message = e.message ?? 'An error occurred.';
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      snackBarMessage(message);
 
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+
+      // Handles ANY unexpected error.
+      // Examples:
+      // - internet failure
+      // - server crash
+      // - unknown bug
+      snackBarMessage('Error: $e');
+
+    } finally {
+
+      
+      //
+      // finally ALWAYS runs no matter what:
+      // - success
+      // - Firebase error
+      // - unknown error
+      //
+      // WHY THIS MATTERS:
+      // Without this, loading could stay true forever
+      // and button would remain disabled.
+      //
+      // This guarantees UI cleanup.
+      setState(() => _isLoading = false);
     }
+  }
+
+  void popPage() {
+
+    // Navigates back to previous screen.
+    Navigator.pop(context);
+  }
+
+  void snackBarMessage(String message) {
+
+    // Reusable snackbar helper.
+    // Makes code cleaner instead of repeating snackbar everywhere.
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
+
       appBar: AppBar(
-        title: Text('Register', style: TextStyle(color: Colors.white)),
+        title: Text(
+          'Register',
+          style: TextStyle(color: Colors.white),
+        ),
+
         centerTitle: true,
+
         backgroundColor: Colors.black,
+
         iconTheme: IconThemeData(color: Colors.white),
       ),
+
       body: SingleChildScrollView(
+
+        // Allows scrolling if keyboard covers screen.
         padding: EdgeInsets.all(16),
+
         child: Form(
+
           key: _formKey,
+
           child: Column(
+
             children: [
-              // FULL NAME
-              TextFormField(
-                controller: _fullnameController,
-                decoration: InputDecoration(
-                  labelText: 'Full name',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Enter full name' : null,
+
+              DropdownMenuFormField(  /// Select User Role
+
+                controller: _roleController,
+
+                width: double.infinity,
+
+                label: const Text('Select Role'),
+
+                requestFocusOnTap: false,
+
+                enableSearch: false,
+
+                dropdownMenuEntries: <DropdownMenuEntry>[
+
+                  DropdownMenuEntry(
+                    value: 'Student',
+                    label: 'Student',
+                  ),
+
+                  DropdownMenuEntry(
+                    value: 'Instructor',
+                    label: 'Instructor',
+                  ),
+                ],
+
+                validator: (last) {
+
+                  if (last == null || last.isEmpty) {
+                    return 'Select a user role';
+                  }
+
+                  return null;
+                },
               ),
 
               SizedBox(height: 20),
 
-              // USERNAME
-            TextFormField(
-              controller: _usernameController,
-              decoration: InputDecoration(
-                labelText: 'Username',
-                border: OutlineInputBorder(),
+              TextFormField(  /// Enter First Name
+
+                controller: _firstNameController,
+
+                decoration: InputDecoration(
+                  hintText: 'First Name',
+                  border: OutlineInputBorder(),
+                ),
+
+                validator: (first) {
+
+                  if (first == null || first.isEmpty) {
+                    return 'Enter a first name';
+                  }
+
+                  return null;
+                },
               ),
-              validator: (value) =>
-                  value == null || value.isEmpty ? 'Enter username' : null,
-            ),
 
-            SizedBox(height: 20),
+              SizedBox(height: 20),
 
+              TextFormField(  /// Enter Last Name
 
-           // EMAIL
-              TextFormField(
+                controller: _lastNameController,
+
+                decoration: InputDecoration(
+                  hintText: 'Last Name',
+                  border: OutlineInputBorder(),
+                ),
+
+                validator: (last) {
+
+                  if (last == null || last.isEmpty) {
+                    return 'Enter a last name';
+                  }
+
+                  return null;
+                },
+              ),
+
+              SizedBox(height: 20),
+
+              TextFormField(  /// Enter Email
+
                 controller: _emailController,
+
                 decoration: InputDecoration(
                   labelText: 'Email',
                   border: OutlineInputBorder(),
                 ),
+
                 keyboardType: TextInputType.emailAddress,
+
                 validator: (email) =>
                     EmailValidator.validate(email ?? "")
                         ? null
@@ -141,25 +303,38 @@ class _RegisterPageState extends State<RegisterPage> {
 
               SizedBox(height: 20),
 
-              // PASSWORD
-              FancyPasswordField(
+              FancyPasswordField(  /// Enter Password
+
+                controller: _passTextController,
+
                 passwordController: _passwordController,
-                onChanged: (value) {
-                  _passwordTextController.text = value;
-                },
+
                 decoration: InputDecoration(
                   labelText: 'Password',
                   border: OutlineInputBorder(),
                 ),
+
                 validationRules: <ValidationRule>{
-                  MinCharactersValidationRule(8),
-                  UppercaseValidationRule(),
+
                   DigitValidationRule(),
+
+                  MinCharactersValidationRule(8),
+
+                  UppercaseValidationRule(),
+
+                  SpecialCharacterValidationRule(),
                 },
+
                 hasStrengthIndicator: true,
+
                 hasShowHidePassword: true,
+
                 validator: (_) {
-                  return _passwordController.areAllRulesValidated
+
+                  return (
+                    _passwordController.areAllRulesValidated &&
+                    _passTextController.text != ""
+                  )
                       ? null
                       : 'Password does not meet requirements';
                 },
@@ -167,18 +342,64 @@ class _RegisterPageState extends State<RegisterPage> {
 
               SizedBox(height: 30),
 
-              // BUTTON
               ElevatedButton(
-                onPressed: registerUser,
+
+                
+                //
+                // If loading is true:
+                // button becomes disabled automatically.
+                //
+                // WHY?
+                // Prevents multiple registration requests.
+                onPressed:
+                    _isLoading ? null : _submitRegister,
+
                 style: ElevatedButton.styleFrom(
+
                   backgroundColor: Colors.black,
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 15,
+                  ),
                 ),
-                child: Text(
-                  'Register',
-                  style: TextStyle(fontSize: 18, color: Colors.white),
-                ),
+
+                
+                //
+                // Shows loading spinner while waiting.
+                //
+                // WHY THIS IMPROVES UX:
+                // User visually understands:
+                // "something is happening"
+                //
+                // Without this:
+                // app feels frozen/confusing.
+                child: _isLoading
+
+                    ? SizedBox(
+
+                        // Keeps spinner from becoming too large.
+                        height: 20,
+                        width: 20,
+
+                        child: CircularProgressIndicator(
+
+                          color: Colors.white,
+
+                          // Makes spinner thinner/cleaner.
+                          strokeWidth: 2,
+                        ),
+                      )
+
+                    : Text(
+
+                        'Register',
+
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ],
           ),
