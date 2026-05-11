@@ -3,6 +3,7 @@ import 'register_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:music_app/services/auth_service.dart';
 import 'package:fancy_password_field/fancy_password_field.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 // Eventually: currently, the app prevents a user from logging in after they're
 // already logged in. Make it so the email + password validators are hidden when
@@ -87,80 +88,6 @@ class _LoginPageState extends State<LoginPage> {
           key: _formKey,
           child: Column(
             children: [
-              SizedBox(height: 24),
-
-    // Divider with "or" label
-    Row(
-      children: [
-        Expanded(child: Divider()),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12),
-          child: Text('or', style: TextStyle(color: Colors.grey)),
-        ),
-        Expanded(child: Divider()),
-      ],
-    ),
-
-    SizedBox(height: 24),
-
-    // Google Button
-    OutlinedButton(
-      onPressed: () {},
-      style: OutlinedButton.styleFrom(
-        backgroundColor: Colors.white,
-        side: BorderSide(color: Colors.grey.shade300),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        padding: EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-        minimumSize: Size(double.infinity, 52),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.g_mobiledata, size: 24),
-          SizedBox(width: 12),
-          Text(
-            'Continue with Google',
-            style: TextStyle(
-              color: Color(0xFF3C4043),
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.2,
-            ),
-          ),
-        ],
-      ),
-    ),
-
-    SizedBox(height: 12),
-
-    // Facebook Button
-    ElevatedButton(
-      onPressed: () {},
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Color(0xFF1877F2),
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        padding: EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-        minimumSize: Size(double.infinity, 52),
-        elevation: 0,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.facebook, color: Colors.white, size: 24),
-          SizedBox(width: 12),
-          Text(
-            'Continue with Facebook',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.2,
-            ),
-          ),
-        ],
-      ),
-    ),
-
               TextFormField(
                 controller: _emailController,
                 decoration: InputDecoration(
@@ -182,7 +109,7 @@ class _LoginPageState extends State<LoginPage> {
                 validator: (value) =>
                     value == null || value.isEmpty ? 'Enter your password' : null,
               ),
-              SizedBox(height: 30),
+              SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _submitLogin,
                 style: ElevatedButton.styleFrom(
@@ -194,8 +121,76 @@ class _LoginPageState extends State<LoginPage> {
                   style: TextStyle(fontSize: 18, color: Colors.white),
                 ),
               ),
-              // TODO: Add two stylized buttons for logins with Google and Facebook (don't worry about functionality yet).
               SizedBox(height: 20),
+              // Divider with "or" label
+              Row(
+                children: [
+                  Expanded(child: Divider()),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    child: Text('or', style: TextStyle(color: Colors.grey)),
+                  ),
+                  Expanded(child: Divider()),
+                ],
+              ),
+              SizedBox(height: 24),
+              // Google Button
+              OutlinedButton(
+                onPressed: () {},
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  side: BorderSide(color: Colors.grey.shade300),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+                  minimumSize: Size(double.infinity, 52),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Icon(Icons.earbuds, size: 20),
+                    SvgPicture.asset('assets/Google_G_logo.svg', width: 24, height: 24),
+                    SizedBox(width: 12),
+                    Text(
+                      'Continue with Google',
+                      style: TextStyle(
+                        color: Color(0xFF3C4043),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 12),
+              // Facebook Button
+              ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF1877F2),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+                  minimumSize: Size(double.infinity, 52),
+                  elevation: 0,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.facebook, color: Colors.white, size: 24),
+                    SizedBox(width: 12),
+                    Text(
+                      'Continue with Facebook',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 30),
               GestureDetector(
                 onTap: _navigateToRegister,
                 child: Text(
