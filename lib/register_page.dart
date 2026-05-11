@@ -349,7 +349,7 @@ class _RegisterPageState extends State<RegisterPage> {
             TextFormField( // confirm password 
               controller: _confirmPassTextController,
               obscureText: true,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
+              autovalidateMode: AutovalidateMode.onUserInteraction, //makes a single text field validate itself automatically while the user is typing or interacting with that field.
                onChanged: (_) {
                 setState(() {});  //Every time the user types a letter, rebuild the widget
                },
