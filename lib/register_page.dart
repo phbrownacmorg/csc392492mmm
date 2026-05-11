@@ -22,6 +22,9 @@ class _RegisterPageState extends State<RegisterPage> {
   final FancyPasswordController _passwordController =
       FancyPasswordController();
 
+      final TextEditingController _confirmPassTextController =
+    TextEditingController();
+
   
   // Tracks whether registration is currently happening.
   // This prevents users from spamming the register button.
@@ -39,6 +42,7 @@ class _RegisterPageState extends State<RegisterPage> {
     _emailController.dispose();
     _passTextController.dispose();
     _passwordController.dispose();
+    _confirmPassTextController.dispose();
 
     super.dispose();
   }
@@ -52,6 +56,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     
     // Turn loading ON before async work starts.
+    //button disables, spinner appears
     setState(() => _isLoading = true);
 
     
@@ -62,8 +67,7 @@ class _RegisterPageState extends State<RegisterPage> {
     // - Firebase gets contacted even if fields are empty
     // - unnecessary network requests happen
     // - slower app
-    //
-    // This is more efficient and professional.
+    //  are fields valid?
     if (!_formKey.currentState!.validate()) {
 
       
@@ -339,6 +343,33 @@ class _RegisterPageState extends State<RegisterPage> {
                       : 'Password does not meet requirements';
                 },
               ),
+
+              SizedBox(height: 20),
+
+            TextFormField( // confirm password 
+              controller: _confirmPassTextController,
+              obscureText: true,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+               onChanged: (_) {
+                setState(() {});  //Every time the user types a letter, rebuild the widget
+               },
+    
+              decoration: InputDecoration(
+                labelText: 'Confirm Password',
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please confirm your password';
+                }
+
+                if (value != _passTextController.text) {
+                  return 'Passwords do not match';
+                }
+
+                return null;
+              },
+            ),
 
               SizedBox(height: 30),
 
