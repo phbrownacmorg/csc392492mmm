@@ -28,8 +28,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _submitLogin() async {
-    if (_formKey.currentState!.validate() && 
-      FirebaseAuth.instance.currentUser == null) {
+    // final emailExists = await authService.value.doesEmailExist(_emailController.text.toLowerCase());
+    User? user = FirebaseAuth.instance.currentUser;
+    if (_formKey.currentState!.validate() && user == null) {
       try {
         await authService.value.login(
           email: _emailController.text,
@@ -48,8 +49,10 @@ class _LoginPageState extends State<LoginPage> {
         }
         snackBarMessage(message);
       }
-    } else if (FirebaseAuth.instance.currentUser != null) {
+    } else if (user != null) {
       snackBarMessage('User is already logged in.');
+    } else if (!_formKey.currentState!.validate()) {
+      snackBarMessage('Please enter valid credentials.');
     } else {
       snackBarMessage('Something went wrong.');
     }

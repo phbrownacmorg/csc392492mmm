@@ -160,6 +160,31 @@ class _EditProfileState extends State<EditProfile> {
     }
   }
 
+  Future<void> _deleteUser() async {
+    final User? user = await authService.value.currentUser;
+
+    if (user != null) {
+      try {
+        authService.value.deleteAccount(user: user);
+        snackBarMessage('Your account has been deleted.');
+        popPage();
+        popPage();
+      } on FirebaseAuthException catch (e) {
+        String message;
+        if (e.code == 'requires-recent-login') {
+          message = 'Error. Please try signing out then logging back in.';
+        } else {
+          message = e.message ?? 'An error occurred.';
+        }
+        snackBarMessage(message);
+      } catch (e) {
+        snackBarMessage('Error: $e');
+      }
+    } else {
+      snackBarMessage('Something went wrong.');
+    }
+  }
+
   void popPage() {
     Navigator.pop(context);
   }
@@ -370,7 +395,7 @@ class _EditProfileState extends State<EditProfile> {
                 ElevatedButton(
                   onPressed: _deleteButton
                     ? () {
-                      print('Working!');
+                      _deleteUser();
                     } : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,

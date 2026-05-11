@@ -14,8 +14,8 @@ class _ProfilePageState extends State<ProfilePage> {
   String firstName = 'Guest';
   String lastName = '';
   String email = '[Not Logged In]';
-  String myInstructors = '[Not Logged In]';
   String role = '[Not Logged In]';
+  String myInstructors = '[Not Logged In]';
   String phone = '[Not Logged In]';
   bool _isEnabled = false;
 
@@ -51,14 +51,18 @@ class _ProfilePageState extends State<ProfilePage> {
     final data = await AuthService().getUserData();
     if (data != null) {
       setState(() {
-        firstName = data['firstName'];
-        lastName = data['lastName'];
-        email = data['email'];
+        _isEnabled = true;
+        firstName = data['firstName'] ?? 'Guest';
+        lastName = data['lastName'] ?? '';
+        email = data['email'] ?? '[No Email Linked]';
+        role = data['role'] ?? '[No Role Set]';
         myInstructors = data['myInstructors'] ?? '[No Instructors Set]';
-        role = data['role'];
         phone = data['phone'] ?? '[No Phone Number Set]';
       });
-      _isEnabled = true;
+      print('Status: $_isEnabled');
+      // _isEnabled = true;
+    } else {
+      print('Unable to access profile data');
     }
   }
 

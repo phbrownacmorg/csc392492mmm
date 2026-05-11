@@ -7,7 +7,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 
 ValueNotifier<AuthService> authService = ValueNotifier(AuthService());
 
@@ -180,12 +179,19 @@ class AuthService {
       return null;
     }
 
-  // Future<void> verifyPhone(String phone) async {
-  //   final RecaptchaVerifier verifier = RecaptchaVerifier(
-  //     auth: FirebaseAuthPlatform.instance,
-  //     provider: 
-  //     )
-  // }
+  Future<void> deleteAccount({
+    required User? user,
+  }) async {
+    // Delete user from Firestore
+    await FirebaseFirestore.instance
+      .collection('users')
+      .doc(currentUser?.uid)
+      .delete();
+
+    // Delete user from Firebase
+    await user?.delete();
+    signOut();
+  }
 
 
   // Everything below is other functions from Flutter Mapp. We can either use them
