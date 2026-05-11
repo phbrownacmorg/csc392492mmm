@@ -3,6 +3,81 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'main.dart';
 
+//TODO implement while reusing as much code as posible from the existing music sheet widigit system
+
+/*
+Let user select a peice->
+Let user select measures from that peice->
+for the future{
+ generate a list of problems to select for each set of mesures by quering the database for known problems.
+ query the database for common problems for the selected peice and mesure set, factoring in the students skill level
+ sort the problem set by how common the problems are.
+ add a "custom problem" option that pops up a widigt to enter a custom problem.
+ allow the user to select/add as many problems as needed.
+ saving the peice, mesure set, skill level, and selected problem(s) to the database to allow us to get statistics of common problems to improve recomendataion.
+}
+for now
+{
+  generate a list of problems to select for each set of mesures by quering the database for known problems.
+  allow the user to select as many problems as needed.
+}->
+for each set of problems selected{
+  query the database for known solutions to all selected problems.
+  generate a list that dynamicaly resorts itself with each solution selected using a sorting order that{
+    keeps the selected solutions at the top in the order that they were selected
+    and sorts the rest of the list by order of how many problems the unselected solutions solve, that the allreaddy selected solutions dont solve.
+  }
+  allow the user to select solution(s) from the generated list.
+  for the future{
+    save the peice, mesure set, skill level, problem set, and selected solution(s) to the database to allow us to get statistics of common solutions choices for the problems to improve recomendataion.
+    query and use saved (problem set-solution set) statistics to improve recomendations of solutions.
+  }
+}->
+allow the user to imput the measure set's tempo, practice time goals, etc->
+allow user to enter aditional peices(repeat steps above for each peice)->
+allow user to save the sheet to the database under their account/push the sheet to their students.
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//TODO old code
 class StudentForm extends StatefulWidget {
   @override
   State<StudentForm> createState() => _StudentFormState();
