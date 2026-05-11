@@ -116,7 +116,7 @@ class _LoginPageState extends State<LoginPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.Google, size: 24),
+          Icon(Icons.g_mobiledata, size: 24),
           SizedBox(width: 12),
           Text(
             'Continue with Google',
