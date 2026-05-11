@@ -33,6 +33,8 @@ dependencies:
 
   google_sign_in: ^7.2.0
   flutter_facebook_auth: ^7.1.6
+  flutter_svg: ^2.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -43,3 +45,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/Google_G_logo.svg
