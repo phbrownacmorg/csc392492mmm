@@ -30,7 +30,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   void dispose() {
 
-    // ✅ GOOD PRACTICE
+    
     // Dispose controllers when page is removed from memory.
     // Prevents memory leaks.
     _firstNameController.dispose();
