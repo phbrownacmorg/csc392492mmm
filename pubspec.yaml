@@ -12,6 +12,10 @@ dependencies:
   flutter:
     sdk: flutter
 
+  firebase_core: ^4.6.0
+  firebase_auth: ^6.4.0
+  cloud_firestore: ^6.2.0
+
   sqflite: ^2.3.0
   path_provider: ^2.1.5
   path: ^1.8.3
@@ -22,12 +26,13 @@ dependencies:
   pluto_grid: ^8.0.0
   file_picker: ^11.0.2
   fancy_password_field: ^2.0.8
-  firebase_core: ^4.6.0
-  cloud_firestore: ^6.2.0
+
   firebase_storage: ^13.2.0
   drift: ^2.32.1
   drift_flutter: ^0.3.0
-  firebase_auth: ^6.4.0
+  email_validator: ^3.0.0
+  intl_phone_number_input: ^0.7.5
+  firebase_auth_platform_interface: ^8.1.9
 
 dev_dependencies:
   flutter_test:
