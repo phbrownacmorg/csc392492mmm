@@ -113,7 +113,7 @@ class AuthService {
         .collection('users')
         .doc(uid)
         .get();
-      return doc.data() as Map<String, dynamic>?;
+      return doc.data() as Map<String, dynamic>;
     }
     return null;
   }

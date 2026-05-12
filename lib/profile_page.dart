@@ -15,8 +15,11 @@ class _ProfilePageState extends State<ProfilePage> {
   String lastName = '';
   String email = '[Not Logged In]';
   String role = '[Not Logged In]';
-  String myInstructors = '[Not Logged In]';
   String phone = '[Not Logged In]';
+  String myInstructors = '[Not Logged In]';
+  String problems = '[Not Logged In]';
+  String assignedSheets = '[Not Logged In]';
+  String completedSheets = '[Not Logged In]';
   bool _isEnabled = false;
 
   Future<void> _submitSignOut() async {
@@ -49,6 +52,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _loadProfile() async {
     final data = await AuthService().getUserData();
+    print(data);
     if (data != null) {
       setState(() {
         _isEnabled = true;
@@ -56,11 +60,12 @@ class _ProfilePageState extends State<ProfilePage> {
         lastName = data['lastName'] ?? '';
         email = data['email'] ?? '[No Email Linked]';
         role = data['role'] ?? '[No Role Set]';
-        myInstructors = data['myInstructors'] ?? '[No Instructors Set]';
         phone = data['phone'] ?? '[No Phone Number Set]';
+        myInstructors = data['myInstructors'].join(', ') ?? '[No Instructors Set]';
+        problems = data['problems'].join(', ') ?? '[No Problems Found]';
+        assignedSheets = data['assignedSheets'].join(', ') ?? '[No Sheets Assigned]';
+        completedSheets = data['completedSheets'].join(', ') ?? '[No Sheets Completed]';
       });
-      print('Status: $_isEnabled');
-      // _isEnabled = true;
     } else {
       print('Unable to access profile data');
     }
@@ -79,7 +84,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     // final appState = Provider.of<MyAppState>(context);
-    String problem = 'None';
+    // String problem = 'None';
 
     return Scaffold(
       appBar: AppBar(
@@ -131,17 +136,27 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             SizedBox(height: 10),
             Text(
-              'My Instructors: $myInstructors',
-              style: const TextStyle(fontSize: 20),
-            ),
-            SizedBox(height: 10),
-            Text(
               'Phone: $phone',
               style: const TextStyle(fontSize: 20),
             ),
             SizedBox(height: 10),
             Text(
-              'Selected Problem: $problem',
+              'My Instructors: $myInstructors',
+              style: const TextStyle(fontSize: 20),
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Problems: $problems',
+              style: const TextStyle(fontSize: 20),
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Assigned Sheets: $assignedSheets',
+              style: const TextStyle(fontSize: 20),
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Completed Sheets: $completedSheets',
               style: const TextStyle(fontSize: 20),
             ),
             // TODO: Add a way to display information on assigned sheets and completed sheets (hint: both fields are initialized as empty lists in auth_service.dart).

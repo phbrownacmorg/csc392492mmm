@@ -13,14 +13,22 @@ class EditProfile extends StatefulWidget {
 class _EditProfileState extends State<EditProfile> {
   final _profileFormKey = GlobalKey<FormState>();
   final _passFormKey = GlobalKey<FormState>();
+  // Account Information
   String role = '[Not Logged In]';
   String firstName = 'Guest';
   String lastName = '';
   String oldEmail = '[Not Logged In]';
   String oldPhone = '';
+
+  // Currently unused
   String myInstructors = '[Not Logged In]';
-  String? phoneISO = '';
-  String? phoneDialCode = '';
+  String problems = '[Not Logged In]';
+  String assignedSheets = '[Not Logged In]';
+  String completedSheets = '[Not Logged In]';
+
+  // Extra data
+  String? phoneISO = 'US';
+  String? phoneDialCode = '+1';
   String _formattedPhone = '';
   bool _isChecked = false;
   bool _deleteButton = false;
@@ -41,6 +49,7 @@ class _EditProfileState extends State<EditProfile> {
 
   Future<void> _loadProfile() async {
     final data = await AuthService().getUserData();
+    print(data);
     if (data != null) {
       print('Profile data is not null.');
       setState(() {
@@ -49,7 +58,10 @@ class _EditProfileState extends State<EditProfile> {
         lastName = data['lastName'];
         oldEmail = data['email'];
         oldPhone = data['phone'] ?? '';
-        myInstructors = data['myInstructors'] ?? '[No Instructor Set]';
+        myInstructors = data['myInstructors'].join(', ') ?? '[No Instructors Set]';
+        problems = data['problems'].join(', ') ?? '[No Problems Found]';
+        assignedSheets = data['assignedSheets'].join(', ') ?? '[No Sheets Assigned]';
+        completedSheets = data['completedSheets'].join(', ') ?? '[No Sheets Completed]';
       });
       if (oldPhone != '') {
         final phoneInfo = await PhoneNumber.getRegionInfoFromPhoneNumber(oldPhone);
@@ -63,7 +75,7 @@ class _EditProfileState extends State<EditProfile> {
       _passTextController = TextEditingController();
       _passwordController = FancyPasswordController();
     } else {
-      print('Profile data is null.');
+      print('Unable to access profile data');
     }
   }
 
