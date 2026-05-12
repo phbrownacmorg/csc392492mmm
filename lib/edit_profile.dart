@@ -130,6 +130,7 @@ class _EditProfileState extends State<EditProfile> {
         }
         snackBarMessage('Your changes have been saved.');
         popPage();
+        popPage();  // Sends user back to home page, forcing a profile reload
       } on FirebaseAuthException catch (e) {
         String message;
         if (e.code == 'email-already-in-use') {
