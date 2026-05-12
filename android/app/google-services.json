@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "255668780311",
-    "project_id": "musicdb-1c5c8",
-    "storage_bucket": "musicdb-1c5c8.firebasestorage.app"
+    "project_number": "885104775556",
+    "project_id": "mcmurraymymusicmastery",
+    "storage_bucket": "mcmurraymymusicmastery.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:255668780311:android:75fb0705f5e4ef11450b52",
+        "mobilesdk_app_id": "1:885104775556:android:aeb037cabdbc35321b4dd1",
         "android_client_info": {
           "package_name": "com.example.music_app"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDOyofvKMMZGjDHg4ETNzKwW3HiGpJs9fs"
+          "current_key": "AIzaSyAAIrScQA_hYSqxxnDFH-nr-yKkNkEUGos"
         }
       ],
       "services": {

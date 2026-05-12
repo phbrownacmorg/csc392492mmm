@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
-import 'register_page.dart'; 
+import 'register_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:music_app/services/auth_service.dart';
+import 'package:fancy_password_field/fancy_password_field.dart';
+
+// Eventually: currently, the app prevents a user from logging in after they're
+// already logged in. Make it so the email + password validators are hidden when
+// this happens (i.e., 'Enter your...' doesn't appear.)
+
+// In the future: implement a way to change your email and/or password.
 
 class LoginPage extends StatefulWidget {
   @override
@@ -21,32 +28,95 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _submitLogin() async {
-  if (!_formKey.currentState!.validate()) return;
+
+  //
+  // Validate form BEFORE contacting Firebase.
+  //
+  // WHY?
+  // Prevents unnecessary Firebase requests
+  // if fields are invalid or empty.
+  //
+  if (!_formKey.currentState!.validate()) {
+    return;
+  }
 
   try {
-    await FirebaseAuth.instance.signInWithEmailAndPassword(
+
+    //
+    // Attempt Firebase login through authService.
+    //
+    // trim() removes accidental spaces:
+    // " test@gmail.com "
+    // becomes:
+    // "test@gmail.com"
+    //
+    await authService.value.login(
+
       email: _emailController.text.trim(),
+
       password: _passwordController.text.trim(),
     );
 
-    //  DO NOT navigate manually
-    //  DO NOT show snackbar "login successful"
-
-    // AuthGate will automatically redirect user
+    
+    // DO NOT manually navigate here because AuthGate is already listening to
+    // FirebaseAuth.instance.authStateChanges()
+    // So when login succeeds, Firebase updates auth state
+    // AuthGate detects login, RoleRedirect runs
+    // User automatically goes to correct page and this is cleaner Firebase architecture.
 
   } on FirebaseAuthException catch (e) {
+
+    
+    // Handles Firebase-specific login errors.
+    
     String message;
 
     if (e.code == 'user-not-found') {
+
+      
+      // No Firebase account exists for email.
+      
       message = 'No user found for that email.';
+
     } else if (e.code == 'wrong-password') {
+
+      //
+      // Password entered incorrectly.
+      //
       message = 'Incorrect password.';
+
+    } else if (e.code == 'invalid-email') {
+
+      //
+      // Email format invalid.
+      //
+      message = 'Invalid email address.';
+
     } else {
+
+      //
+      // Generic Firebase error fallback.
+      //
       message = e.message ?? 'Login failed.';
     }
 
+    //
+    // Display error message to user.
+    //
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
+    );
+
+  } catch (e) {
+
+    //
+    // Handles unexpected errors:
+    // - internet failure
+    // - server problems
+    // - unknown bugs
+    //
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $e')),
     );
   }
 }
@@ -55,6 +125,16 @@ class _LoginPageState extends State<LoginPage> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => RegisterPage()),
+    );
+  }
+
+  void popPage() {
+    Navigator.pop(context);
+  }
+
+  void snackBarMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 
@@ -73,6 +153,7 @@ class _LoginPageState extends State<LoginPage> {
           key: _formKey,
           child: Column(
             children: [
+              // TODO: Add ability to sign in with phone number. Ideally, email and phone number would share a text field. Likely, most of the logic would be handled by auth_service.dart.
               TextFormField(
                 controller: _emailController,
                 decoration: InputDecoration(
@@ -83,13 +164,14 @@ class _LoginPageState extends State<LoginPage> {
                     value == null || value.isEmpty ? 'Enter your email' : null,
               ),
               SizedBox(height: 20),
-              TextFormField(
+              FancyPasswordField(
                 controller: _passwordController,
                 decoration: InputDecoration(
                   labelText: 'Password',
                   border: OutlineInputBorder(),
                 ),
-                obscureText: true,
+                hasStrengthIndicator: false,
+                hasShowHidePassword: true,
                 validator: (value) =>
                     value == null || value.isEmpty ? 'Enter your password' : null,
               ),
@@ -103,6 +185,28 @@ class _LoginPageState extends State<LoginPage> {
                 child: Text(
                   'Login',
                   style: TextStyle(fontSize: 18, color: Colors.white),
+                ),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                ),
+                child: Text(
+                  'Login with Google',
+                  style: TextStyle(fontSize: 12, color: Colors.white),
+                ),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                ),
+                child: Text(
+                  'Login with Facebook',
+                  style: TextStyle(fontSize: 12, color: Colors.white),
                 ),
               ),
               SizedBox(height: 20),

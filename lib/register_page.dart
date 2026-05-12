@@ -3,6 +3,7 @@ import 'package:fancy_password_field/fancy_password_field.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:music_app/services/auth_service.dart';
+import 'package:music_app/services/auth_service.dart';
 
 class RegisterPage extends StatefulWidget {
   @override
@@ -40,6 +41,7 @@ class _RegisterPageState extends State<RegisterPage> {
     _lastNameController.dispose();
     _roleController.dispose();
     _emailController.dispose();
+    _passTextController.dispose();
     _passTextController.dispose();
     _passwordController.dispose();
     _confirmPassTextController.dispose();
@@ -273,6 +275,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                 decoration: InputDecoration(
                   hintText: 'Last Name',
+                  hintText: 'Last Name',
                   border: OutlineInputBorder(),
                 ),
 
@@ -298,11 +301,10 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
 
                 keyboardType: TextInputType.emailAddress,
-
-                validator: (email) =>
-                    EmailValidator.validate(email ?? "")
-                        ? null
-                        : 'Enter a valid email',
+                autofillHints: [AutofillHints.email],
+                validator: (email) => EmailValidator.validate(email ?? "")
+                  ? null
+                  : 'Enter a valid email',
               ),
 
               SizedBox(height: 20),

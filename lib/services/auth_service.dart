@@ -48,8 +48,13 @@ class AuthService {
           'lastName': lastName,
           'role': role,
           // Everything below is NOT required during registration!
+<<<<<<< HEAD
           'phone': null, // Add ability to add # to an eventual profile editor 
           'myInstructor': null,
+=======
+          'phone': null,
+          'myInstructors': [],
+>>>>>>> purple-auth-service-feature-branch
           'problems': [],
           'assignedSheets': [],
           'completedSheets': [],
@@ -63,6 +68,48 @@ class AuthService {
     }
   }
 
+<<<<<<< HEAD
+=======
+  Future<String?> editProfile({
+    required String oldEmail,
+    required String newEmail,
+    required String firstName,
+    required String lastName,
+    required String role,
+    required String phone,
+  }) async {
+    try {
+      if (newEmail != oldEmail) {
+        await FirebaseAuth.instance.currentUser!.verifyBeforeUpdateEmail(newEmail);
+      }
+      await FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser?.uid)
+        .update({
+          'email': newEmail,
+          'firstName': firstName,
+          'lastName': lastName,
+          'role': role,
+          'phone': phone,
+        });
+      return null;
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
+  Future<String?> updatePassword({
+    required String password,
+  }) async {
+    try {
+      await FirebaseAuth.instance.currentUser?.updatePassword(password);
+      return null;
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
+>>>>>>> purple-auth-service-feature-branch
   // TODO: Create new function to handle login with Google account
 
   // TODO: Create new function to handle login with Facebook account
@@ -87,10 +134,78 @@ class AuthService {
     return snapshot.docs.isNotEmpty;
   }
 
+<<<<<<< HEAD
+=======
+  Future<bool> doesPhoneExist(String phone) async {
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+      .collection('users')
+      .where('phone', isEqualTo: phone)
+      .get();
+    return snapshot.docs.isNotEmpty;
+  }
+
+>>>>>>> purple-auth-service-feature-branch
   Future<void> signOut() async {
     await firebaseAuth.signOut();
   }
 
+<<<<<<< HEAD
+=======
+  Future<void> updateEmail({
+    required String email,
+  }) async {
+    await firebaseAuth.currentUser!.verifyBeforeUpdateEmail(email);
+  }
+
+  Future<String?> verifyPhone({
+    required String phone,
+    }) async {
+      try {
+        // final RecaptchaVerifier verifier = RecaptchaVerifier(
+        //   auth: FirebaseAuthPlatform.instance,
+        // );
+
+        await firebaseAuth.verifyPhoneNumber(
+          phoneNumber: phone,
+          verificationCompleted: (PhoneAuthCredential credential) async {
+            await firebaseAuth.currentUser?.linkWithCredential(credential);
+          }, 
+          verificationFailed: (FirebaseAuthException e) {
+            print('Auth Error Code: ${e.code}');
+            print('Auth Error Message: ${e.message}');
+          }, 
+          codeSent: (String verificationId, int? resendToken) async {
+            String smsCode = 'xxxx';
+            PhoneAuthCredential credential = PhoneAuthProvider.credential(
+              verificationId: verificationId, 
+              smsCode: smsCode
+            );
+            await firebaseAuth.signInWithCredential(credential);
+          }, 
+          timeout: const Duration(seconds: 60),
+          codeAutoRetrievalTimeout: (String verificationId) {
+          },
+        );
+      } catch (e) {
+        print('');
+      }
+      return null;
+    }
+
+  Future<void> deleteAccount({
+    required User? user,
+  }) async {
+    // Delete user from Firestore
+    await FirebaseFirestore.instance
+      .collection('users')
+      .doc(currentUser?.uid)
+      .delete();
+
+    // Delete user from Firebase
+    await user?.delete();
+    signOut();
+  }
+>>>>>>> purple-auth-service-feature-branch
 
 
   // Everything below is other functions from Flutter Mapp. We can either use them
@@ -124,9 +239,16 @@ class AuthService {
   //   required String newPassword,
   //   required String email,
   // }) async {
+<<<<<<< HEAD
   //   AuthCredential credential = 
   //     EmailAuthProvider.credential(email: email, password: currentPassword);
   //   await currentUser!.reauthenticateWithCredential(credential);
   //   await currentUser!.updatePassword(newPassword);
+=======
+    // AuthCredential credential = 
+    //   EmailAuthProvider.credential(email: email, password: currentPassword);
+    // await currentUser!.reauthenticateWithCredential(credential);
+    // await currentUser!.updatePassword(newPassword);
+>>>>>>> purple-auth-service-feature-branch
   // }
 }
