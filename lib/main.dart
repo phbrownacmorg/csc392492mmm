@@ -9,6 +9,7 @@ import 'firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'profile_page.dart';
+import 'edit_profile.dart';  // For debug only
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -107,6 +108,7 @@ class MyHomePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => CreateMusicSheetPage()),
+                    // MaterialPageRoute(builder: (context) => EditProfile()),  // For debug only
                   );
                 }),
                 _buildButton('View Sheets', context, () {

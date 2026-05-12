@@ -93,6 +93,7 @@ class _LoginPageState extends State<LoginPage> {
               // TODO: Add ability to sign in with phone number. Ideally, email and phone number would share a text field. Likely, most of the logic would be handled by auth_service.dart.
               TextFormField(
                 controller: _emailController,
+                autofillHints: [AutofillHints.email],
                 decoration: InputDecoration(
                   labelText: 'Email',
                   border: OutlineInputBorder(),
@@ -103,6 +104,7 @@ class _LoginPageState extends State<LoginPage> {
               SizedBox(height: 20),
               FancyPasswordField(
                 controller: _passwordController,
+                autofillHints: [AutofillHints.password],
                 decoration: InputDecoration(
                   labelText: 'Password',
                   border: OutlineInputBorder(),

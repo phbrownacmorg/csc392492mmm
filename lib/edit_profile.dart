@@ -49,7 +49,7 @@ class _EditProfileState extends State<EditProfile> {
 
   Future<void> _loadProfile() async {
     final data = await AuthService().getUserData();
-    print(data);
+    // print('User data $data');  // Debug check
     if (data != null) {
       print('Profile data is not null.');
       setState(() {
