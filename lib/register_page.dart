@@ -41,7 +41,8 @@ class _RegisterPageState extends State<RegisterPage> {
           role: _roleController.text,
         );
         snackBarMessage('Registration successful');
-        popPage(); // Go back to login page after registering
+        popPage();
+        popPage(); // Go back to home page after registering
       } on FirebaseAuthException catch (e) {
         String message;
         if (e.code == 'email-already-in-use') {

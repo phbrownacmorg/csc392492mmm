@@ -173,12 +173,13 @@ class _EditProfileState extends State<EditProfile> {
   }
 
   Future<void> _deleteUser() async {
-    final User? user = await authService.value.currentUser;
+    final User? user = authService.value.currentUser;
 
     if (user != null) {
       try {
         authService.value.deleteAccount(user: user);
         snackBarMessage('Your account has been deleted.');
+        authService.value.signOut();
         popPage();
         popPage();
       } on FirebaseAuthException catch (e) {
