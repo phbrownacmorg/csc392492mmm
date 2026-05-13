@@ -185,6 +185,32 @@ class _RegisterPageState extends State<RegisterPage> {
                 },
               ),
               SizedBox(height: 30),
+
+              FancyPasswordField( // confirm password 
+              controller: _confirmPassTextController,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+               onChanged: (_) {
+                setState(() {});
+               },
+              decoration: InputDecoration(
+                labelText: 'Confirm Password',
+                border: OutlineInputBorder(),
+              ),
+              hasStrengthIndicator: false,
+              hasShowHidePassword: true,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please confirm your password';
+                }
+                if (value != _passTextController.text) {
+                  return 'Passwords do not match';
+                }
+                return null;
+              },
+            ),
+
+              SizedBox(height: 30),
+              
               ElevatedButton(
                 onPressed: _submitRegister,
                 style: ElevatedButton.styleFrom(
