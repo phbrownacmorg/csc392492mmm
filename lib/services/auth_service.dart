@@ -48,13 +48,8 @@ class AuthService {
           'lastName': lastName,
           'role': role,
           // Everything below is NOT required during registration!
-<<<<<<< HEAD
-          'phone': null, // Add ability to add # to an eventual profile editor 
-          'myInstructor': null,
-=======
           'phone': null,
           'myInstructors': [],
->>>>>>> purple-auth-service-feature-branch
           'problems': [],
           'assignedSheets': [],
           'completedSheets': [],
@@ -68,8 +63,6 @@ class AuthService {
     }
   }
 
-<<<<<<< HEAD
-=======
   Future<String?> editProfile({
     required String oldEmail,
     required String newEmail,
@@ -109,7 +102,6 @@ class AuthService {
     }
   }
 
->>>>>>> purple-auth-service-feature-branch
   // TODO: Create new function to handle login with Google account
 
   // TODO: Create new function to handle login with Facebook account
@@ -134,8 +126,6 @@ class AuthService {
     return snapshot.docs.isNotEmpty;
   }
 
-<<<<<<< HEAD
-=======
   Future<bool> doesPhoneExist(String phone) async {
     QuerySnapshot snapshot = await FirebaseFirestore.instance
       .collection('users')
@@ -144,13 +134,10 @@ class AuthService {
     return snapshot.docs.isNotEmpty;
   }
 
->>>>>>> purple-auth-service-feature-branch
   Future<void> signOut() async {
     await firebaseAuth.signOut();
   }
 
-<<<<<<< HEAD
-=======
   Future<void> updateEmail({
     required String email,
   }) async {
@@ -205,7 +192,6 @@ class AuthService {
     await user?.delete();
     signOut();
   }
->>>>>>> purple-auth-service-feature-branch
 
 
   // Everything below is other functions from Flutter Mapp. We can either use them
@@ -239,16 +225,9 @@ class AuthService {
   //   required String newPassword,
   //   required String email,
   // }) async {
-<<<<<<< HEAD
-  //   AuthCredential credential = 
-  //     EmailAuthProvider.credential(email: email, password: currentPassword);
-  //   await currentUser!.reauthenticateWithCredential(credential);
-  //   await currentUser!.updatePassword(newPassword);
-=======
     // AuthCredential credential = 
     //   EmailAuthProvider.credential(email: email, password: currentPassword);
     // await currentUser!.reauthenticateWithCredential(credential);
     // await currentUser!.updatePassword(newPassword);
->>>>>>> purple-auth-service-feature-branch
   // }
 }

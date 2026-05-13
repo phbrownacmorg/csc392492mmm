@@ -3,7 +3,7 @@ import 'package:fancy_password_field/fancy_password_field.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:music_app/services/auth_service.dart';
-import 'package:music_app/services/auth_service.dart';
+
 
 class RegisterPage extends StatefulWidget {
   @override
@@ -231,7 +231,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
 
                   DropdownMenuEntry(
-                    value: 'Instructor',
+                    value: 'admin',
                     label: 'Instructor',
                   ),
                 ],
@@ -274,7 +274,6 @@ class _RegisterPageState extends State<RegisterPage> {
                 controller: _lastNameController,
 
                 decoration: InputDecoration(
-                  hintText: 'Last Name',
                   hintText: 'Last Name',
                   border: OutlineInputBorder(),
                 ),
