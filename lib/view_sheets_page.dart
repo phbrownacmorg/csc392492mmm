@@ -606,7 +606,7 @@ Future<void> _fetchStrategiesFromFirestore() async {
     labelText: 'Strategy',
     border: OutlineInputBorder(),
   ),
-  value: availableStrategies.contains(row.strategyController.text)
+  initialValue: availableStrategies.contains(row.strategyController.text)
       ? row.strategyController.text
       : null,
   items: availableStrategies.map((strategy) {

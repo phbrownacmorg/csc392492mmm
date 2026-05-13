@@ -29,15 +29,6 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
-<<<<<<< HEAD
-  void _submitRegister() {
-    if (_formKey.currentState!.validate()) {
-      // Write database here, once you agree on what goes there
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Registration successful')),
-      );
-      Navigator.pop(context); // Go back to login page after registering
-=======
   Future<void> _submitRegister() async {
     final emailExists = await authService.value.doesEmailExist(_emailController.text.toLowerCase());
     if (_formKey.currentState!.validate() && !emailExists) {
@@ -68,7 +59,6 @@ class _RegisterPageState extends State<RegisterPage> {
       snackBarMessage('An account already exists for that email.');
     } else {
       snackBarMessage('Something went wrong.');
->>>>>>> origin/purple-auth-service-feature-branch
     }
   }
 
