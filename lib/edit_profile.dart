@@ -52,7 +52,7 @@ class _EditProfileState extends State<EditProfile> {
     final data = await AuthService().getUserData();
     // print('User data $data');  // Debug check
     if (data != null) {
-      print('Profile data is not null.');
+      // print('Profile data is not null.');  // Debug check
       setState(() {
         role = data['role'];
         firstName = data['firstName'];
@@ -126,7 +126,7 @@ class _EditProfileState extends State<EditProfile> {
         }
         // If the phone number changed, verify the new number on Firebase
         if (!phoneExists && newPhone != '') {
-          // TODO: add phone number as a new sign-in provider on Firebase console
+          // Soon: add phone number as a new sign-in provider on Firebase console
           authService.value.verifyPhone(phone: newPhone);
         }
         snackBarMessage('Your changes have been saved.');

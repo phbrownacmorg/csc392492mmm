@@ -159,7 +159,7 @@ class _ProfilePageState extends State<ProfilePage> {
               'Completed Sheets: $completedSheets',
               style: const TextStyle(fontSize: 20),
             ),
-            // TODO: Add a way to display information on assigned sheets and completed sheets (hint: both fields are initialized as empty lists in auth_service.dart).
+            // Soon: Add a way to display information on assigned sheets and completed sheets (hint: both fields are initialized as empty lists in auth_service.dart).
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _isEnabled

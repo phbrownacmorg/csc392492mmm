@@ -91,7 +91,7 @@ class _LoginPageState extends State<LoginPage> {
           key: _formKey,
           child: Column(
             children: [
-              // TODO: Add ability to sign in with phone number. Ideally, email and phone number would share a text field. Likely, most of the logic would be handled by auth_service.dart.
+              // Soon: Add ability to sign in with phone number. Ideally, email and phone number would share a text field. Likely, most of the logic would be handled by auth_service.dart.
               TextFormField(
                 controller: _emailController,
                 autofillHints: [AutofillHints.email],

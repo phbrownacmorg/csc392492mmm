@@ -70,6 +70,8 @@ class AuthService {
   }
 
   Future<String?> editProfile({
+  // KNOWN ISSUE: Changing email without verifying it can cause Firebase and
+  // Firestore user data to fall out of sync.
     required String oldEmail,
     required String newEmail,
     required String firstName,
@@ -108,12 +110,12 @@ class AuthService {
     }
   }
 
-  // TODO: Create new function to handle login with Google account
+  // Soon: Create new function to handle login with Google account
 
-  // TODO: Create new function to handle login with Facebook account
+  // Soon: Create new function to handle login with Facebook account
 
   Future<Map<String, dynamic>?> getUserData() async {
-    // IMPORTANT: If debugger is pausing here or profile data is unable to load,
+    // KNOWN ISSUE: If debugger is pausing here or profile data is unable to load,
     // make sure that ALL data for a Firestore user is being assigned as variables.
     // For new users, that includes every field defined in createAccount(). For
     // older users, some newer fields may not exist, causing issues loading user
