@@ -10,8 +10,10 @@ class Document{
 //class to hold the info for a database collection
 class Collection{
   final String collectionPath;
-  Collection(this.collectionPath, this._documents);
+  final List<String> displayFields; // Defined fields to prevent overflow
   List<Document>? _documents;
+
+  Collection(this.collectionPath, this.displayFields, this._documents);
 }
 
 
@@ -27,12 +29,15 @@ class _CreateDatabaseFormFormState extends State<DatabaseForm> {
   Collection? _selectedCollection;
   Document? _selectedDocument;
   String _documentJson = '';
-  //final _formKey = GlobalKey<FormState>();
 
 //temp use strings for database collections untill database collection loading logic is possible.
-  List<Collection> _collections = [Collection('Problems', null),Collection('Solutions', null),Collection('Strategies', null),Collection('users',null),Collection('music_sheets',null)];
-//Update when doocument format changes
-  Map<String,String> _documentIdTable = {'Problems':'problem_name','Solutions':'strategy_name','Strategies':'strategy_name'};
+final List<Collection> _collections = [
+    Collection('Problems', ['problem_name', 'problem_id'], null),
+    Collection('Solutions', ['strategy_name', 'solution_id'], null),
+    Collection('Strategies', ['strategy_name'], null),
+    Collection('users', ['username', 'email'], null),
+    Collection('music_sheets', ['title', 'sheet_id'], null)
+  ];
 
   @override
   void initState() {
@@ -40,47 +45,37 @@ class _CreateDatabaseFormFormState extends State<DatabaseForm> {
     //_fetchCollectionsFromFirestore();
     _fetchDocumentsFromFirestore();
   }
-  //need to get a database that allowes accessing a list of collections for this to be implemented
-  /*Future<void> _fetchCollectionsFromFirestore() async {
-    try {
-      final querySnapshot = await FirebaseFirestore.instance.collection('Problems').get();
-      final problems = querySnapshot.docs.map((doc) {
-        final data = doc.data();
-        return Problem(
-          data['problem_id'] as int,
-          data['problem_name'] as String,
-        );
-      }).toList();
-
-      problems.sort((a, b) => a.id.compareTo(b.id)); // Sort by ID
-      
-      setState(() {
-        _problems = problems;
-      });
-    } catch (e) {
-      print('Error fetching problems: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load problems')),
-      );
-    }
-  }*/
   
   Future<void> _fetchDocumentsFromFirestore() async {
     for (var index = 0; index < _collections.length; index += 1){
-      final querySnapshot = await FirebaseFirestore.instance.collection(_collections[index].collectionPath).get();
-      _collections[index]._documents = querySnapshot.docs.map<Document>((element){
+      final collection = _collections[index];
+      final querySnapshot = await FirebaseFirestore.instance.collection(collection.collectionPath).get();
+
+      collection._documents = querySnapshot.docs.map<Document>((element){
         final data = element.data();
-        String documentName = '';
-        //use hash of document as fallback
-        if(_documentIdTable[_collections[index].collectionPath] != null){
-          documentName = data[_documentIdTable[_collections[index].collectionPath]].toString();
+        List<String> displayValues = [];
+
+        // Build the dropdown name using only specified fields
+        for (String field in collection.displayFields) {
+          if (data.containsKey(field) && data[field] != null && data[field].toString().isNotEmpty) {
+            displayValues.add(data[field].toString());
+          }
         }
-        else{
-          documentName = data.hashCode.toString();
+
+        String documentName;
+        if (displayValues.isNotEmpty) {
+          // Joins multiple found fields (e.g. "Math Problem - 123")
+          documentName = displayValues.join(' - ');
+        } else {
+          // Use the actual Firestore document ID as a clean fallback instead of hashCode
+          documentName = 'ID: ${element.id}'; 
         }
+
         return Document(documentName, data);
       }).toList();
     }
+    // Trigger a rebuild once documents are loaded so dropdowns populate
+    if (mounted) setState(() {});
   }
 
   @override
@@ -100,66 +95,75 @@ class _CreateDatabaseFormFormState extends State<DatabaseForm> {
       ),
       width: double.infinity,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              SizedBox(width: 20),
-              Text(
-               'Collection:'
-              ),
-              DropdownButton<Collection>(
-                value: _selectedCollection,
-                items: _collections.map((Collection collection) {
-                  return DropdownMenuItem<Collection>(
-                    value: collection,
-                    child: Text(collection.collectionPath),
-                  );
-                }).toList(),
-                onChanged: (Collection? newValue){
-                  setState(() {
-                    _selectedCollection = newValue;
-                    _selectedDocument = null;
-                    _documentJson = '';
-                  });
-                },
-                hint: Text(
-                  'Please select a collection'
+              Text('Collection:'),
+              SizedBox(width: 8),
+              // Wrapped in Expanded to prevent layout overflow
+              Expanded(
+                child: DropdownButton<Collection>(
+                  isExpanded: true, // Crucial for preventing text overflow
+                  value: _selectedCollection,
+                  items: _collections.map((Collection collection) {
+                    return DropdownMenuItem<Collection>(
+                      value: collection,
+                      child: Text(
+                        collection.collectionPath,
+                        overflow: TextOverflow.ellipsis, // Truncates text instead of breaking UI
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (Collection? newValue) {
+                    setState(() {
+                      _selectedCollection = newValue;
+                      _selectedDocument = null;
+                      _documentJson = '';
+                    });
+                  },
+                  hint: Text('Select a collection'),
                 ),
               ),
               SizedBox(width: 20),
-              Text(
-               'Document:'
-              ),
-              DropdownButton<Document>(
-                value: _selectedDocument,
-                items: _selectedCollection?._documents?.map((Document document) {
-                  return DropdownMenuItem<Document>(
-                    value: document,
-                    child: Text(document.name),
-                  );
-                }).toList(),
-                onChanged: (Document? newValue){
-                  setState(() {
-                    _selectedDocument = newValue;
-                    if(newValue != null){
-                      _documentJson = newValue.data.toString();
-                    }
-                    else{
-                      _documentJson = '';
-                    }
-                  });
-                },
-                hint: Text(
-                  'Please select a document'
+              Text('Document:'),
+              SizedBox(width: 8),
+              // Wrapped in Expanded to prevent layout overflow
+              Expanded(
+                child: DropdownButton<Document>(
+                  isExpanded: true, // Crucial for preventing text overflow
+                  value: _selectedDocument,
+                  items: _selectedCollection?._documents?.map((Document document) {
+                    return DropdownMenuItem<Document>(
+                      value: document,
+                      child: Text(
+                        document.name,
+                        overflow: TextOverflow.ellipsis, // Truncates text instead of breaking UI
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (Document? newValue) {
+                    setState(() {
+                      _selectedDocument = newValue;
+                      if (newValue != null) {
+                        _documentJson = newValue.data.toString();
+                      } else {
+                        _documentJson = '';
+                      }
+                    });
+                  },
+                  hint: Text('Select a document'),
                 ),
               ),
             ],
           ),
+          SizedBox(height: 20),
           Text(
-            _documentJson
+            _documentJson,
+            style: TextStyle(fontFamily: 'monospace'), // Makes JSON data slightly easier to read
           )
         ],
-      )
+      ),
     );
   }
 }
