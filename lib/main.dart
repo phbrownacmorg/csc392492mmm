@@ -12,7 +12,6 @@ import 'profile_page.dart';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -212,6 +211,7 @@ class _StudentFormState extends State<StudentForm> {
 
   List<Problem> _problems = [];
   List<String> _strategies = [];
+  List<String> _pieces = [];
 
   List<PracticeRowData> _rows = [];
 
@@ -223,6 +223,7 @@ class _StudentFormState extends State<StudentForm> {
 
     _fetchProblemsFromFirestore();
     _fetchStrategiesFromFirestore();
+    _fetchPiecesFromFirestore();
 
     final currentUser = FirebaseAuth.instance.currentUser;
 
@@ -278,6 +279,27 @@ class _StudentFormState extends State<StudentForm> {
       );
     }
   }
+
+  Future<void> _fetchPiecesFromFirestore() async {
+  try {
+    final querySnapshot =
+        await FirebaseFirestore.instance.collection('pieces').get();
+
+    final pieces = querySnapshot.docs
+        .map((doc) => doc['name'].toString())
+        .toList();
+
+    setState(() {
+      _pieces = pieces;
+    });
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Could not load pieces.'),
+      ),
+    );
+  }
+}
 
   Future<void> _pickVideo(PracticeRowData row) async {
     FilePickerResult? result = await FilePicker.pickFiles(
@@ -415,13 +437,26 @@ class _StudentFormState extends State<StudentForm> {
 
             const SizedBox(height: 20),
 
-            TextFormField(
-              controller: row.pieceController,
+            DropdownButtonFormField<String>(
               decoration: const InputDecoration(
                 labelText: 'Piece',
                 border: OutlineInputBorder(),
               ),
-            ),
+              value: row.pieceController.text.isEmpty
+                  ? null
+                  : row.pieceController.text,
+              items: _pieces.map((piece) {
+                return DropdownMenuItem<String>(
+                value: piece,
+                child: Text(piece),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                row.pieceController.text = value ?? '';
+              });
+            },
+          ),
 
             const SizedBox(height: 20),
 
