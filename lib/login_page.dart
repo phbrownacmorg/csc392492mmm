@@ -128,28 +128,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                ),
-                child: Text(
-                  'Login with Google',
-                  style: TextStyle(fontSize: 12, color: Colors.white),
-                ),
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                ),
-                child: Text(
-                  'Login with Facebook',
-                  style: TextStyle(fontSize: 12, color: Colors.white),
-                ),
-              ),
-              SizedBox(height: 20),
               // Divider with "or" label
               Row(
                 children: [
@@ -164,7 +142,7 @@ class _LoginPageState extends State<LoginPage> {
               SizedBox(height: 24),
               // Google Button
               OutlinedButton(
-                onPressed: () {},
+                onPressed: () => snackBarMessage('Coming soon!'),
                 style: OutlinedButton.styleFrom(
                   backgroundColor: Colors.white,
                   side: BorderSide(color: Colors.grey.shade300),
@@ -193,7 +171,7 @@ class _LoginPageState extends State<LoginPage> {
               SizedBox(height: 12),
               // Facebook Button
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () => snackBarMessage('Coming soon!'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF1877F2),
                   foregroundColor: Colors.white,

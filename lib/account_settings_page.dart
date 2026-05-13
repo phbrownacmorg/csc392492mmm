@@ -1,3 +1,6 @@
+// Page currently unused, with edit_profile being used instead. This page is kept
+// for possible re-use in the future.
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 

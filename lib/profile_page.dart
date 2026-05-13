@@ -52,7 +52,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _loadProfile() async {
     final data = await AuthService().getUserData();
-    print('User data $data');  // Debug check
+    // print('User data $data');  // Debug check
     if (data != null) {
       setState(() {
         _isEnabled = true;
