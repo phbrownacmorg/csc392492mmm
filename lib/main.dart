@@ -9,7 +9,7 @@ import 'firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'profile_page.dart';
-import 'edit_profile.dart';  // For debug only
+// import 'edit_profile.dart';  // For debug only
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();

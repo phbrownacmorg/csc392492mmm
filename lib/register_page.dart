@@ -14,6 +14,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _roleController = TextEditingController();
+  final TextEditingController _instructorController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passTextController = TextEditingController();
   final FancyPasswordController _passwordController = FancyPasswordController();
@@ -23,6 +24,7 @@ class _RegisterPageState extends State<RegisterPage> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _roleController.dispose();
+    _instructorController.dispose();
     _emailController.dispose();
     _passTextController.dispose();
     _passwordController.dispose();
@@ -103,6 +105,20 @@ class _RegisterPageState extends State<RegisterPage> {
                   }
                   return null;
                 },
+              ),
+              SizedBox(height: 20),
+              DropdownMenuFormField(
+                controller: _instructorController,
+                width: double.infinity,
+                label: const Text('Select Instructor'),
+                requestFocusOnTap: false,
+                enableSearch: false,
+                dropdownMenuEntries: <DropdownMenuEntry>[
+                  DropdownMenuEntry(value: 'None', label: 'None'),
+                  DropdownMenuEntry(value: 'Dr. Thornburg', label: 'Dr. Thornburg'),
+                  DropdownMenuEntry(value: 'Dr. Brown', label: 'Dr. Brown'),
+                  DropdownMenuEntry(value: 'Dr. McMurray', label: 'Dr. McMurray'),
+                ],
               ),
               SizedBox(height: 20),
               TextFormField(  /// Enter First Name

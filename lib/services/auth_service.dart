@@ -33,16 +33,22 @@ class AuthService {
     required String role,
   }) async {
     try {
-      final userCredential = await FirebaseAuth.instance
-        .createUserWithEmailAndPassword(
+      final userCredential = await firebaseAuth.createUserWithEmailAndPassword(
           email: email,
           password: password,
       );
+
+      final user = userCredential.user;
+      if (user == null) {
+        return 'Unexpected error: could not create user account.';
+      }
+
+      final uid = user.uid;
       await FirebaseFirestore.instance
         .collection('users')
-        .doc(userCredential.user!.uid)
+        .doc(uid)
         .set({
-          'uid': userCredential.user!.uid, // EVERY user has a unique UID
+          'uid': uid,  // Store the Firebase auth UID explicitly
           'email': email,
           'firstName': firstName,
           'lastName': lastName,
@@ -53,8 +59,8 @@ class AuthService {
           'problems': [],
           'assignedSheets': [],
           'completedSheets': [],
-          // TODO: Add Google account field
-          // TODO: Add Facebook account field
+          'googleAccount': null,
+          'facebookAccount': null,
         });
 
       return null;
