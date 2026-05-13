@@ -1,3 +1,4 @@
+// ignore_for_file: type=lint
 // Page currently unused, with edit_profile being used instead. This page is kept
 // for possible re-use in the future.
 
