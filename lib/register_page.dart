@@ -18,6 +18,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passTextController = TextEditingController();
   final FancyPasswordController _passwordController = FancyPasswordController();
+  final TextEditingController _confirmPassTextController = TextEditingController();
 
   @override
   void dispose() {
@@ -28,6 +29,7 @@ class _RegisterPageState extends State<RegisterPage> {
     _emailController.dispose();
     _passTextController.dispose();
     _passwordController.dispose();
+    _confirmPassTextController.dispose();
     super.dispose();
   }
 
