@@ -347,27 +347,26 @@ class _RegisterPageState extends State<RegisterPage> {
 
               SizedBox(height: 20),
 
-            TextFormField( // confirm password 
+            // Add the FancyPasswordField to purple-auth-registration
+            FancyPasswordField( // confirm password 
               controller: _confirmPassTextController,
-              obscureText: true,
-              autovalidateMode: AutovalidateMode.onUserInteraction, //makes a single text field validate itself automatically while the user is typing or interacting with that field.
+              autovalidateMode: AutovalidateMode.onUserInteraction,
                onChanged: (_) {
-                setState(() {});  //Every time the user types a letter, rebuild the widget
+                setState(() {});
                },
-    
               decoration: InputDecoration(
                 labelText: 'Confirm Password',
                 border: OutlineInputBorder(),
               ),
+              hasStrengthIndicator: false,
+              hasShowHidePassword: true,
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please confirm your password';
                 }
-
                 if (value != _passTextController.text) {
                   return 'Passwords do not match';
                 }
-
                 return null;
               },
             ),
