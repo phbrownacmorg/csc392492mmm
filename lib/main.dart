@@ -13,6 +13,9 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'view_database_page.dart';
+
+
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -117,6 +120,12 @@ class MyHomePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => ViewSheetsPage()),
+                  );
+                }),
+                _buildButton('Debug_Database_Viewer', context, () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ViewDatabaseSheetPage()),
                   );
                 }),
               ],
