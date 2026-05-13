@@ -85,6 +85,8 @@ class StudentForm extends StatefulWidget {
 
 class _StudentFormState extends State<StudentForm> {
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _pieceController = TextEditingController();
+  final TextEditingController _measuresController = TextEditingController();
   Problem? _selectedProblem;
   final _formKey = GlobalKey<FormState>();
 
@@ -123,6 +125,8 @@ class _StudentFormState extends State<StudentForm> {
   @override
   void dispose() {
     _nameController.dispose();
+    _pieceController.dispose();
+    _measuresController.dispose();
     super.dispose();
   }
 
@@ -155,6 +159,36 @@ class _StudentFormState extends State<StudentForm> {
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter student name';
+                }
+                return null;
+              },
+            ),
+            SizedBox(height: 20),
+            TextFormField(
+              controller: _pieceController,
+              decoration: InputDecoration(
+                labelText: 'Piece Name',
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter a piece name';
+                }
+                return null;
+              },
+            ),
+
+            SizedBox(height: 20),
+            TextFormField(
+              controller: _measuresController,
+              decoration: InputDecoration(
+                labelText: 'Measures',
+                hintText: 'Example: 1-8',
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter the measure range';
                 }
                 return null;
               },
