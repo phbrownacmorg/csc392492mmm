@@ -142,7 +142,7 @@ class _LoginPageState extends State<LoginPage> {
               SizedBox(height: 24),
               // Google Button
               OutlinedButton(
-                onPressed: () => snackBarMessage('Coming soon!'),
+                onPressed: () => snackBarMessage('Coming Soon!'),
                 style: OutlinedButton.styleFrom(
                   backgroundColor: Colors.white,
                   side: BorderSide(color: Colors.grey.shade300),
@@ -171,7 +171,7 @@ class _LoginPageState extends State<LoginPage> {
               SizedBox(height: 12),
               // Facebook Button
               ElevatedButton(
-                onPressed: () => snackBarMessage('Coming soon!'),
+                onPressed: () => snackBarMessage('Coming Soon!'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF1877F2),
                   foregroundColor: Colors.white,

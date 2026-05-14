@@ -435,7 +435,7 @@ class _EditProfileState extends State<EditProfile> {
                 ),
                 SizedBox(height: 20),
               OutlinedButton(
-                onPressed: () => snackBarMessage('Coming soon!'),
+                onPressed: () => snackBarMessage('Coming Soon!'),
                 style: OutlinedButton.styleFrom(
                   backgroundColor: Colors.white,
                   side: BorderSide(color: Colors.grey.shade300),
@@ -463,7 +463,7 @@ class _EditProfileState extends State<EditProfile> {
               ),
               SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () => snackBarMessage('Coming soon!'),
+                onPressed: () => snackBarMessage('Coming Soon!'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF1877F2),
                   foregroundColor: Colors.white,

@@ -61,6 +61,8 @@ class _RegisterPageState extends State<RegisterPage> {
       }
     } else if (emailExists) {
       snackBarMessage('An account already exists for that email.');
+    } else if (!_formKey.currentState!.validate()) {
+      snackBarMessage('Please enter valid credentials.');
     } else {
       snackBarMessage('Something went wrong.');
     }
@@ -187,32 +189,29 @@ class _RegisterPageState extends State<RegisterPage> {
                 },
               ),
               SizedBox(height: 30),
-
-              FancyPasswordField( // confirm password 
-              controller: _confirmPassTextController,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-               onChanged: (_) {
-                setState(() {});
-               },
-              decoration: InputDecoration(
-                labelText: 'Confirm Password',
-                border: OutlineInputBorder(),
+              FancyPasswordField(  /// Confirm Password 
+                controller: _confirmPassTextController,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                onChanged: (_) {
+                  setState(() {});
+                },
+                decoration: InputDecoration(
+                  labelText: 'Confirm Password',
+                  border: OutlineInputBorder(),
+                ),
+                hasStrengthIndicator: false,
+                hasShowHidePassword: true,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please confirm your password';
+                  }
+                  if (value != _passTextController.text) {
+                    return 'Passwords do not match';
+                  }
+                  return null;
+                },
               ),
-              hasStrengthIndicator: false,
-              hasShowHidePassword: true,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please confirm your password';
-                }
-                if (value != _passTextController.text) {
-                  return 'Passwords do not match';
-                }
-                return null;
-              },
-            ),
-
               SizedBox(height: 30),
-              
               ElevatedButton(
                 onPressed: _submitRegister,
                 style: ElevatedButton.styleFrom(
@@ -224,6 +223,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   style: TextStyle(fontSize: 18, color: Colors.white),
                 ),
               ),
+              SizedBox(height: 50),
             ],
           ),
         ),
