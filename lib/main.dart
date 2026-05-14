@@ -474,6 +474,8 @@ class _StudentFormState extends State<StudentForm> {
                 labelText: 'Tempo',
                 border: OutlineInputBorder(),
               ),
+              //set read only if peice controler is empty
+              readOnly: (row.pieceController.text == ""),
             ),
 
             const SizedBox(height: 20),
@@ -489,6 +491,8 @@ class _StudentFormState extends State<StudentForm> {
                   
                 });
               },
+              //set read only if peice controler is empty
+              readOnly: (row.pieceController.text == ""),
             ),
 
             const SizedBox(height: 20),
