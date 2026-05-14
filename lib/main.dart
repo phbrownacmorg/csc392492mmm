@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'login_page.dart';
 import 'view_sheets_page.dart';
 import 'music_sheet_page.dart';
+import 'view_database_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -116,6 +117,12 @@ class MyHomePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => ViewSheetsPage()),
+                  );
+                }),
+                _buildButton('Database Debug', context, () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ViewDatabaseSheetPage()),
                   );
                 }),
               ],
