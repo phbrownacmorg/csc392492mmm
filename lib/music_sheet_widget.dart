@@ -12,7 +12,7 @@ class MusicSheetWidget extends StatefulWidget {
   @override
   State<MusicSheetWidget> createState() => _MusicSheetWidgetState();
 }
-
+  
 class _MusicSheetWidgetState extends State<MusicSheetWidget> {
   late List<PlutoColumn> columns;
   late List<PlutoRow> rows;
@@ -26,6 +26,12 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
 
   List<String> strategies = [];
   List<String> pieces = [];
+  //avoid duplicaring code for the practice log
+  bool _readOnlyHelperFunction(PlutoRow row, PlutoCell cell) {
+      final piece = row.cells['strategy']?.value?.toString().trim() ?? '';
+      return piece.isEmpty;
+  }
+
 
   @override
   void initState() {
@@ -84,6 +90,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.number(),
         width: 50,
         enableSorting: false,
+        checkReadOnly: _readOnlyHelperFunction,
       ),
       PlutoColumn(
         title: 'T',
@@ -91,6 +98,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.number(),
         width: 50,
         enableSorting: false,
+        checkReadOnly: _readOnlyHelperFunction,
       ),
       PlutoColumn(
         title: 'W',
@@ -98,6 +106,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.number(),
         width: 50,
         enableSorting: false,
+        checkReadOnly: _readOnlyHelperFunction,
       ),
       PlutoColumn(
         title: 'H',
@@ -105,6 +114,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.number(),
         width: 50,
         enableSorting: false,
+        checkReadOnly: _readOnlyHelperFunction,
       ),
       PlutoColumn(
         title: 'F',
@@ -112,6 +122,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.number(),
         width: 50,
         enableSorting: false,
+        checkReadOnly: _readOnlyHelperFunction,
       ),
       PlutoColumn(
         title: 'Sat',
@@ -119,6 +130,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.number(),
         width: 70,
         enableSorting: false,
+        checkReadOnly: _readOnlyHelperFunction,
       ),
       PlutoColumn(
         title: 'Sun',
@@ -126,6 +138,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.number(),
         width: 70,
         enableSorting: false,
+        checkReadOnly: _readOnlyHelperFunction,
       ),
       PlutoColumn(
         title: 'Mastery',
@@ -133,6 +146,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.select(['Mastered', 'Not Mastered']),
         width: 120,
         enableSorting: false,
+        checkReadOnly: _readOnlyHelperFunction,
       ),
     ];
 
