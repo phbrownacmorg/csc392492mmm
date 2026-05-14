@@ -331,6 +331,7 @@ class _StudentFormState extends State<StudentForm> {
   Widget _buildDayField(
     String label,
     TextEditingController controller,
+    PracticeRowData row,
   ) {
     return Expanded(
       child: Padding(
@@ -342,6 +343,7 @@ class _StudentFormState extends State<StudentForm> {
             labelText: label,
             border: const OutlineInputBorder(),
           ),
+          readOnly: (row.selectedStrategy == null),
         ),
       ),
     );
@@ -461,6 +463,19 @@ class _StudentFormState extends State<StudentForm> {
             onChanged: (value) {
               setState(() {
                 row.pieceController.text = value ?? '';
+                //reset state on piece change
+                row.tempoController.clear();
+                row.passageController.clear();
+                row.selectedProblems.clear();
+                row.selectedStrategy = null;
+                row.mastery = 'Not Mastered';
+                row.monController.clear();
+                row.tueController.clear();
+                row.wedController.clear();
+                row.thuController.clear();
+                row.friController.clear();
+                row.satController.clear();
+                row.sunController.clear();
               });
             },
           ),
@@ -486,9 +501,19 @@ class _StudentFormState extends State<StudentForm> {
                 labelText: 'Passage',
                 border: OutlineInputBorder(),
               ),
-              onChanged: (row){
+              onChanged: (value){
                 setState(() {
-                  
+                  //clear data on passage change
+                  row.selectedStrategy = null;
+                  row.selectedProblems.clear();
+                  row.mastery = 'Not Mastered';
+                  row.monController.clear();
+                  row.tueController.clear();
+                  row.wedController.clear();
+                  row.thuController.clear();
+                  row.friController.clear();
+                  row.satController.clear();
+                  row.sunController.clear();
                 });
               },
               //set read only if peice controler is empty
@@ -514,7 +539,7 @@ class _StudentFormState extends State<StudentForm> {
 
                 return CheckboxListTile(
                   title: Text(problem.name),
-                  value: isSelected,
+                  value: (row.passageController.value.text == "") ? false : isSelected,
                   onChanged: (row.passageController.value.text == "") ? null : (value) {
                     setState(() {
                       if (value == true) {
@@ -534,7 +559,8 @@ class _StudentFormState extends State<StudentForm> {
                 border: OutlineInputBorder(),
               ),
               value: row.selectedStrategy,
-              items: _strategies.map((strategy) {
+              //dont alow stratigy selection unles a prroblem is selected
+              items: (row.selectedProblems.isEmpty) ? null : _strategies.map((strategy) {
                 return DropdownMenuItem<String>(
                   value: strategy,
                   child: Text(strategy),
@@ -544,20 +570,20 @@ class _StudentFormState extends State<StudentForm> {
                 setState(() {
                   row.selectedStrategy = value;
                 });
-              },
+              },      
             ),
 
             const SizedBox(height: 20),
 
             Row(
               children: [
-                _buildDayField('M', row.monController),
-                _buildDayField('T', row.tueController),
-                _buildDayField('W', row.wedController),
-                _buildDayField('H', row.thuController),
-                _buildDayField('F', row.friController),
-                _buildDayField('Sat', row.satController),
-                _buildDayField('Sun', row.sunController),
+                _buildDayField('M', row.monController,row),
+                _buildDayField('T', row.tueController,row),
+                _buildDayField('W', row.wedController,row),
+                _buildDayField('H', row.thuController,row),
+                _buildDayField('F', row.friController,row),
+                _buildDayField('Sat', row.satController,row),
+                _buildDayField('Sun', row.sunController,row),
               ],
             ),
 
@@ -569,7 +595,7 @@ class _StudentFormState extends State<StudentForm> {
                 border: OutlineInputBorder(),
               ),
               value: row.mastery,
-              items: const [
+              items: (row.selectedProblems.isEmpty) ? null : const [
                 DropdownMenuItem(
                   value: 'Mastered',
                   child: Text('Mastered'),
