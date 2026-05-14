@@ -484,6 +484,11 @@ class _StudentFormState extends State<StudentForm> {
                 labelText: 'Passage',
                 border: OutlineInputBorder(),
               ),
+              onChanged: (row){
+                setState(() {
+                  
+                });
+              },
             ),
 
             const SizedBox(height: 20),
@@ -506,7 +511,7 @@ class _StudentFormState extends State<StudentForm> {
                 return CheckboxListTile(
                   title: Text(problem.name),
                   value: isSelected,
-                  onChanged: (value) {
+                  onChanged: (row.passageController.value.text == "") ? null : (value) {
                     setState(() {
                       if (value == true) {
                         row.selectedProblems.add(problem);
