@@ -29,35 +29,98 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _submitLogin() async {
-    // final emailExists = await authService.value.doesEmailExist(_emailController.text.toLowerCase());
-    User? user = FirebaseAuth.instance.currentUser;
-    if (_formKey.currentState!.validate() && user == null) {
-      try {
-        await authService.value.login(
-          email: _emailController.text,
-          password: _passwordController.text,
-        );
-        snackBarMessage('Login successful.');
-        popPage(); // Go back to home page after logging in
-      } on FirebaseAuthException catch (e) {
-        String message;
-        if (e.code == 'invalid-credential') {
-          message = 'Incorrect email or password.';
-        } else if (e.code == 'invalid-email') {
-          message = 'Invalid email address.';
-        } else {
-          message = e.message ?? 'An error occurred.';
-        }
-        snackBarMessage(message);
-      }
-    } else if (user != null) {
-      snackBarMessage('User is already logged in.');
-    } else if (!_formKey.currentState!.validate()) {
-      snackBarMessage('Please enter valid credentials.');
-    } else {
-      snackBarMessage('Something went wrong.');
-    }
+
+  //
+  // Validate form BEFORE contacting Firebase.
+  //
+  // WHY?
+  // Prevents unnecessary Firebase requests
+  // if fields are invalid or empty.
+  //
+  if (!_formKey.currentState!.validate()) {
+    return;
   }
+
+  try {
+
+    //
+    // Attempt Firebase login through authService.
+    //
+    // trim() removes accidental spaces:
+    // " test@gmail.com "
+    // becomes:
+    // "test@gmail.com"
+    //
+    await authService.value.login(
+
+      email: _emailController.text.trim(),
+
+      password: _passwordController.text.trim(),
+    );
+
+    
+    // DO NOT manually navigate here because AuthGate is already listening to
+    // FirebaseAuth.instance.authStateChanges()
+    // So when login succeeds, Firebase updates auth state
+    // AuthGate detects login, RoleRedirect runs
+    // User automatically goes to correct page and this is cleaner Firebase architecture.
+
+  } on FirebaseAuthException catch (e) {
+
+    
+    // Handles Firebase-specific login errors.
+    
+    String message;
+
+    if (e.code == 'user-not-found') {
+
+      
+      // No Firebase account exists for email.
+      
+      message = 'No user found for that email.';
+
+    } else if (e.code == 'wrong-password') {
+
+      //
+      // Password entered incorrectly.
+      //
+      message = 'Incorrect password.';
+
+    } else if (e.code == 'invalid-email') {
+
+      //
+      // Email format invalid.
+      //
+      message = 'Invalid email address.';
+
+    } else {
+
+      //
+      // Generic Firebase error fallback.
+      //
+      message = e.message ?? 'Login failed.';
+    }
+
+    //
+    // Display error message to user.
+    //
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+
+  } catch (e) {
+
+    //
+    // Handles unexpected errors:
+    // - internet failure
+    // - server problems
+    // - unknown bugs
+    //
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $e')),
+    );
+  }
+}
 
   void _navigateToRegister() {
     Navigator.push(
