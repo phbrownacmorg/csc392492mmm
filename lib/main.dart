@@ -2,7 +2,7 @@ import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
 import 'login_page.dart';
 import 'view_sheets_page.dart';
-import 'music_sheet_page.dart';
+import 'create_music_sheet_page.dart';
 import 'view_database_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
