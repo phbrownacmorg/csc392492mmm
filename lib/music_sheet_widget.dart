@@ -12,7 +12,7 @@ class MusicSheetWidget extends StatefulWidget {
   @override
   State<MusicSheetWidget> createState() => _MusicSheetWidgetState();
 }
-
+  
 class _MusicSheetWidgetState extends State<MusicSheetWidget> {
   late List<PlutoColumn> columns;
   late List<PlutoRow> rows;
@@ -25,6 +25,13 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
   final TextEditingController worksheetNameController = TextEditingController();
 
   List<String> strategies = [];
+  List<String> pieces = [];
+  //avoid duplicaring code for the practice log
+  bool _readOnlyHelperFunction(PlutoRow row, PlutoCell cell) {
+      final piece = row.cells['strategy']?.value?.toString().trim() ?? '';
+      return piece.isEmpty;
+  }
+
 
   @override
   void initState() {
@@ -34,7 +41,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
       PlutoColumn(
         title: 'Piece',
         field: 'piece',
-        type: PlutoColumnType.text(),
+        type: PlutoColumnType.select(pieces),
         enableSorting: false,
       ),
       PlutoColumn(
@@ -42,18 +49,40 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         field: 'tempo',
         type: PlutoColumnType.number(),
         enableSorting: false,
+        checkReadOnly: (row, cell) {
+          final piece = row.cells['piece']?.value?.toString().trim() ?? '';
+          return piece.isEmpty;
+        },
       ),
       PlutoColumn(
         title: 'Practice Passage',
         field: 'passage',
         type: PlutoColumnType.text(),
         enableSorting: false,
+        checkReadOnly: (row, cell) {
+          final piece = row.cells['piece']?.value?.toString().trim() ?? '';
+          return piece.isEmpty;
+        },
+      ),
+      PlutoColumn(
+        title: 'Problems',
+        field: 'problems',
+        type: PlutoColumnType.text(),
+        enableSorting: false,
+        checkReadOnly: (row, cell) {
+          final piece = row.cells['piece']?.value?.toString().trim() ?? '';
+          return piece.isEmpty;
+        },
       ),
       PlutoColumn(
         title: 'Practice Strategy',
         field: 'strategy',
         type: PlutoColumnType.select(strategies),
         enableSorting: false,
+        checkReadOnly: (row, cell) {
+          final passage = row.cells['passage']?.value?.toString().trim() ?? '';
+          return passage.isEmpty;
+        },
       ),
       PlutoColumn(
         title: 'M',
@@ -61,6 +90,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.number(),
         width: 50,
         enableSorting: false,
+        checkReadOnly: _readOnlyHelperFunction,
       ),
       PlutoColumn(
         title: 'T',
@@ -68,6 +98,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.number(),
         width: 50,
         enableSorting: false,
+        checkReadOnly: _readOnlyHelperFunction,
       ),
       PlutoColumn(
         title: 'W',
@@ -75,6 +106,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.number(),
         width: 50,
         enableSorting: false,
+        checkReadOnly: _readOnlyHelperFunction,
       ),
       PlutoColumn(
         title: 'H',
@@ -82,6 +114,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.number(),
         width: 50,
         enableSorting: false,
+        checkReadOnly: _readOnlyHelperFunction,
       ),
       PlutoColumn(
         title: 'F',
@@ -89,6 +122,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.number(),
         width: 50,
         enableSorting: false,
+        checkReadOnly: _readOnlyHelperFunction,
       ),
       PlutoColumn(
         title: 'Sat',
@@ -96,6 +130,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.number(),
         width: 70,
         enableSorting: false,
+        checkReadOnly: _readOnlyHelperFunction,
       ),
       PlutoColumn(
         title: 'Sun',
@@ -103,6 +138,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.number(),
         width: 70,
         enableSorting: false,
+        checkReadOnly: _readOnlyHelperFunction,
       ),
       PlutoColumn(
         title: 'Mastery',
@@ -110,6 +146,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.select(['Mastered', 'Not Mastered']),
         width: 120,
         enableSorting: false,
+        checkReadOnly: _readOnlyHelperFunction,
       ),
     ];
 
@@ -118,6 +155,34 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
     ];
 
     _fetchStrategiesFromFirestore();
+    _fetchPiecesFromFirestore();
+  }
+
+  Future<void> _fetchPiecesFromFirestore() async {
+    try {
+      final querySnapshot =
+          await FirebaseFirestore.instance.collection('pieces').get();
+
+      final loadedPieces = querySnapshot.docs
+          .map((doc) => doc['name'].toString())
+          .toList();
+
+      setState(() {
+        pieces = loadedPieces;
+
+        final pieceColumn = columns.firstWhere(
+          (column) => column.field == 'piece',
+        );
+
+        pieceColumn.type = PlutoColumnType.select(pieces);
+      });
+
+      stateManager?.notifyListeners();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not load pieces.')),
+      );
+    }
   }
 
   Future<void> _fetchStrategiesFromFirestore() async {
@@ -153,6 +218,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         'piece': PlutoCell(value: ''),
         'tempo': PlutoCell(value: 80),
         'passage': PlutoCell(value: ''),
+        'problems': PlutoCell(value: ''),
         'strategy': PlutoCell(value: ''),
         'mon': PlutoCell(value: 0),
         'tue': PlutoCell(value: 0),
@@ -167,11 +233,11 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
   }
 
   void _addNewRow() {
-    setState(() {
-      final newRow = _createNewPracticeRow();
-      rows.add(newRow);
-      stateManager?.appendRows([newRow]);
-    });
+    if (stateManager != null) {
+      stateManager!.appendRows([_createNewPracticeRow()]);
+    } else {
+      rows.add(_createNewPracticeRow());
+    }
   }
 
   Future<void> _pickVideo() async {
@@ -214,6 +280,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         'piece': row.cells['piece']?.value,
         'tempo': row.cells['tempo']?.value,
         'passage': row.cells['passage']?.value,
+        'problems': row.cells['problems']?.value,
         'strategy': row.cells['strategy']?.value,
         'mon': row.cells['mon']?.value,
         'tue': row.cells['tue']?.value,
