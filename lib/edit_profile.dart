@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:music_app/services/auth_service.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class EditProfile extends StatefulWidget {
   @override
@@ -49,9 +50,9 @@ class _EditProfileState extends State<EditProfile> {
 
   Future<void> _loadProfile() async {
     final data = await AuthService().getUserData();
-    print(data);
+    // print('User data $data');  // Debug check
     if (data != null) {
-      print('Profile data is not null.');
+      // print('Profile data is not null.');  // Debug check
       setState(() {
         role = data['role'];
         firstName = data['firstName'];
@@ -125,7 +126,7 @@ class _EditProfileState extends State<EditProfile> {
         }
         // If the phone number changed, verify the new number on Firebase
         if (!phoneExists && newPhone != '') {
-          // TODO: add phone number as a new sign-in provider on Firebase console
+          // Soon: add phone number as a new sign-in provider on Firebase console
           authService.value.verifyPhone(phone: newPhone);
         }
         snackBarMessage('Your changes have been saved.');
@@ -420,10 +421,77 @@ class _EditProfileState extends State<EditProfile> {
                     style: TextStyle(fontSize: 18, color: Colors.white),
                   ),
                 ),
+                SizedBox(height: 70),
               ],
             ),
           ),
-
+          Form(
+            // key: _passFormKey,
+            child: Column(
+              children: [
+                Text(
+                  'Login with Other Services',
+                  style: TextStyle(fontSize: 25, color: Colors.black),
+                ),
+                SizedBox(height: 20),
+              OutlinedButton(
+                onPressed: () => snackBarMessage('Coming Soon!'),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  side: BorderSide(color: Colors.grey.shade300),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+                  minimumSize: Size(double.infinity, 52),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Icon(Icons.earbuds, size: 20),
+                    SvgPicture.asset('assets/Google_G_logo.svg', width: 24, height: 24),
+                    SizedBox(width: 12),
+                    Text(
+                      'Continue with Google',
+                      style: TextStyle(
+                        color: Color(0xFF3C4043),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () => snackBarMessage('Coming Soon!'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF1877F2),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+                  minimumSize: Size(double.infinity, 52),
+                  elevation: 0,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.facebook, color: Colors.white, size: 24),
+                    SizedBox(width: 12),
+                    Text(
+                      'Continue with Facebook',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 70),
+              ],
+            ),
+          ),
         ],
       ),
     );

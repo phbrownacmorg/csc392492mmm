@@ -111,6 +111,7 @@ class MyHomePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => CreateMusicSheetPage()),
+                    // MaterialPageRoute(builder: (context) => EditProfile()),  // For debug only
                   );
                 }),
                 _buildButton('View Sheets', context, () {
