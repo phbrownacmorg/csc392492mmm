@@ -18,7 +18,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
   late List<PlutoRow> rows;
   PlutoGridStateManager? stateManager;
 
-  Uint8List? selectedVideoBytes;
+  Stream<Uint8List>? selectedVideoByteStream;
   String? selectedVideoName;
 
   final TextEditingController notesController = TextEditingController();
@@ -241,22 +241,22 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
   }
 
   Future<void> _pickVideo() async {
-    FilePickerResult? result = await FilePicker.pickFiles(
+    PlatformFile? result = await FilePicker.pickFile(
       type: FileType.video,
-      withData: true,
+      //withData: true,
     );
 
     if (result != null) {
       setState(() {
-        selectedVideoBytes = result.files.single.bytes;
-        selectedVideoName = result.files.single.name;
+        selectedVideoByteStream = result.readAsByteStream();
+        selectedVideoName = result.name;
       });
     }
   }
 
   void _removeSelectedVideo() {
     setState(() {
-      selectedVideoBytes = null;
+      selectedVideoByteStream = null;
       selectedVideoName = null;
     });
   }
@@ -313,12 +313,17 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
 
       String? videoUrl;
 
-      if (selectedVideoBytes != null && selectedVideoName != null) {
+      if (selectedVideoByteStream != null && selectedVideoName != null) {
         final storageRef = FirebaseStorage.instance
             .ref()
             .child('music_sheet_videos/$selectedVideoName');
 
-        await storageRef.putData(selectedVideoBytes!);
+        final BytesBuilder videoBytes = BytesBuilder();
+        await for (final chunk in selectedVideoByteStream!) {
+          videoBytes.add(chunk);
+        }
+
+        await storageRef.putData(videoBytes.toBytes());
         videoUrl = await storageRef.getDownloadURL();
       }
 

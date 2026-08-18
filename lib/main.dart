@@ -483,7 +483,7 @@ class PracticeRowData {
 
   List<Problem> selectedProblems = [];
 
-  Uint8List? videoBytes;
+  Stream<Uint8List>? videoByteStream;
   String? videoName;
 }
 
@@ -627,15 +627,15 @@ class _StudentFormState extends State<StudentForm> {
 }
 
   Future<void> _pickVideo(PracticeRowData row) async {
-    FilePickerResult? result = await FilePicker.pickFiles(
-      type: FileType.video,
-      withData: true,
+    PlatformFile? file = await FilePicker.pickFile(
+      type: FileType.video
+      //withData: true,
     );
 
-    if (result != null) {
+    if (file != null) {
       setState(() {
-        row.videoBytes = result.files.single.bytes;
-        row.videoName = result.files.single.name;
+        row.videoByteStream = file.readAsByteStream();
+        row.videoName = file.name;
       });
     }
   }
@@ -674,12 +674,17 @@ class _StudentFormState extends State<StudentForm> {
       for (var row in _rows) {
         String? videoUrl;
 
-        if (row.videoBytes != null && row.videoName != null) {
+        if (row.videoByteStream != null && row.videoName != null) {
+          final BytesBuilder videoBytes = BytesBuilder();
+          await for (final chunk in row.videoByteStream!) {
+            videoBytes.add(chunk);
+          }
+
           final storageRef = FirebaseStorage.instance
               .ref()
               .child('music_sheet_videos/${row.videoName}');
 
-          await storageRef.putData(row.videoBytes!);
+          await storageRef.putData(videoBytes.toBytes());
 
           videoUrl = await storageRef.getDownloadURL();
         }
@@ -958,7 +963,7 @@ class _StudentFormState extends State<StudentForm> {
           tooltip: 'Remove Video',
           onPressed: () {
             setState(() {
-              row.videoBytes = null;
+              row.videoByteStream = null;
               row.videoName = null;
             });
           },

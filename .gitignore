@@ -49,3 +49,5 @@ app.*.map.json
 generated_plugin_registrant.*
 GeneratedPluginRegistrant.*
 generated_plugins.cmake
+pubspec.lock
+macos/Flutter/GeneratedPluginRegistrant.swift
