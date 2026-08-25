@@ -205,7 +205,7 @@ class RoleRedirect extends StatelessWidget {
         //
         // Read role from Firestore.
         //
-        final role = data['role'];
+        final role = data['role']?.toString().toLowerCase();
 
         //
         // Redirect based on role.

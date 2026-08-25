@@ -61,10 +61,10 @@ class _ProfilePageState extends State<ProfilePage> {
         email = data['email'] ?? '[No Email Linked]';
         role = data['role'] ?? '[No Role Set]';
         phone = data['phone'] ?? '[No Phone Number Set]';
-        myInstructors = data['myInstructors'].join(', ') ?? '[No Instructors Set]';
-        problems = data['problems'].join(', ') ?? '[No Problems Found]';
-        assignedSheets = data['assignedSheets'].join(', ') ?? '[No Sheets Assigned]';
-        completedSheets = data['completedSheets'].join(', ') ?? '[No Sheets Completed]';
+        myInstructors = data['myInstructors']?.join(', ') ?? '[No Instructors Set]';
+        problems = data['problems']?.join(', ') ?? '[No Problems Found]';
+        assignedSheets = data['assignedSheets']?.join(', ') ?? '[No Sheets Assigned]';
+        completedSheets = data['completedSheets']?.join(', ') ?? '[No Sheets Completed]';
       });
     } else {
       print('Unable to access profile data');

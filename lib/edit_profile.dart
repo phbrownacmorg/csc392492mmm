@@ -59,10 +59,10 @@ class _EditProfileState extends State<EditProfile> {
         lastName = data['lastName'];
         oldEmail = data['email'];
         oldPhone = data['phone'] ?? '';
-        myInstructors = data['myInstructors'].join(', ') ?? '[No Instructors Set]';
-        problems = data['problems'].join(', ') ?? '[No Problems Found]';
-        assignedSheets = data['assignedSheets'].join(', ') ?? '[No Sheets Assigned]';
-        completedSheets = data['completedSheets'].join(', ') ?? '[No Sheets Completed]';
+        myInstructors = data['myInstructors']?.join(', ') ?? '[No Instructors Set]';
+        problems = data['problems']?.join(', ') ?? '[No Problems Found]';
+        assignedSheets = data['assignedSheets']?.join(', ') ?? '[No Sheets Assigned]';
+        completedSheets = data['completedSheets']?.join(', ') ?? '[No Sheets Completed]';
       });
       if (oldPhone != '') {
         final phoneInfo = await PhoneNumber.getRegionInfoFromPhoneNumber(oldPhone);
