@@ -179,9 +179,11 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
 
       stateManager?.notifyListeners();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not load pieces.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not load pieces.')),
+        );
+      }
     }
   }
 
@@ -206,9 +208,11 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
 
       stateManager?.notifyListeners();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not load strategies.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not load strategies.')),
+        );
+      }
     }
   }
 
