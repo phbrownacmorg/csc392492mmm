@@ -9,19 +9,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 
 import 'login_page.dart';
-import 'register_page.dart';
+//import 'register_page.dart';
 import 'view_sheets_page.dart';
 import 'create_music_sheet_page.dart';
 import 'view_database_page.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'profile_page.dart';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:provider/provider.dart';
 import 'admin_page.dart';
 
 Future<void> main() async {
@@ -576,11 +571,13 @@ class _StudentFormState extends State<StudentForm> {
       });
 
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to load problems'),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to load problems'),
+          ),
+        );
+      }
     }
   }
 
@@ -597,11 +594,13 @@ class _StudentFormState extends State<StudentForm> {
         _strategies = strategies;
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not load strategies.'),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not load strategies.'),
+          ),
+        );
+      }
     }
   }
 
@@ -618,11 +617,13 @@ class _StudentFormState extends State<StudentForm> {
       _pieces = pieces;
     });
   } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Could not load pieces.'),
-      ),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not load pieces.'),
+        ),
+      );
+    }
   }
 }
 
@@ -774,7 +775,7 @@ class _StudentFormState extends State<StudentForm> {
                 labelText: 'Piece',
                 border: OutlineInputBorder(),
               ),
-              value: row.pieceController.text.isEmpty
+              initialValue: row.pieceController.text.isEmpty
                   ? null
                   : row.pieceController.text,
               items: _pieces.map((piece) {
@@ -881,7 +882,7 @@ class _StudentFormState extends State<StudentForm> {
                 labelText: 'Practice Strategy',
                 border: OutlineInputBorder(),
               ),
-              value: row.selectedStrategy,
+              initialValue: row.selectedStrategy,
               //dont alow stratigy selection unles a prroblem is selected
               items: (row.selectedProblems.isEmpty) ? null : _strategies.map((strategy) {
                 return DropdownMenuItem<String>(
@@ -917,7 +918,7 @@ class _StudentFormState extends State<StudentForm> {
                 labelText: 'Mastery',
                 border: OutlineInputBorder(),
               ),
-              value: row.mastery,
+              initialValue: row.mastery,
               items: (row.selectedProblems.isEmpty) ? null : const [
                 DropdownMenuItem(
                   value: 'Mastered',

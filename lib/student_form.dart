@@ -73,7 +73,7 @@ class _StudentFormState extends State<StudentForm> {
 
             DropdownButtonFormField<Problem>(
               hint: Text('Select a problem'),
-              value: _selectedProblem,
+              initialValue: _selectedProblem,
               items: _problems.map((problem) {
                 return DropdownMenuItem(
                   value: problem,

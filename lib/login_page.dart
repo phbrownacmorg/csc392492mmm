@@ -104,10 +104,11 @@ class _LoginPageState extends State<LoginPage> {
     //
     // Display error message to user.
     //
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
   } catch (e) {
 
     //
@@ -116,9 +117,11 @@ class _LoginPageState extends State<LoginPage> {
     // - server problems
     // - unknown bugs
     //
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: $e')),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
   }
 }
 
