@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:video_player/video_player.dart';
 
 class ViewSheetsPage extends StatefulWidget {
   const ViewSheetsPage({super.key});
@@ -257,6 +258,13 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
           const SizedBox(height: 12),
           _buildRowsPreview(rows is List ? rows : []),
           const SizedBox(height: 12),
+          if (data['videoUrl'] != null &&
+              data['videoUrl'].toString().isNotEmpty)
+            SheetVideoPlayer(
+              videoUrl: data['videoUrl'].toString(),
+            ),
+
+const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -759,3 +767,78 @@ Column(
     );
   }
 }
+class SheetVideoPlayer extends StatefulWidget {
+  final String videoUrl;
+
+  const SheetVideoPlayer({
+    super.key,
+    required this.videoUrl,
+  });
+
+  @override
+  State<SheetVideoPlayer> createState() => _SheetVideoPlayerState();
+}
+
+class _SheetVideoPlayerState extends State<SheetVideoPlayer> {
+  late VideoPlayerController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller =
+        VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
+          ..initialize().then((_) {
+            if (mounted) {
+              setState(() {});
+            }
+          });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_controller.value.isInitialized) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SizedBox(
+        width: 140,
+        child: Column(
+          children: [
+            AspectRatio(
+              aspectRatio: _controller.value.aspectRatio,
+              child: VideoPlayer(_controller),
+            ),
+            IconButton(
+              icon: Icon(
+                _controller.value.isPlaying
+                    ? Icons.pause
+                    : Icons.play_arrow,
+            ),
+            onPressed: () {
+              setState(() {
+                if (_controller.value.isPlaying) {
+                  _controller.pause();
+                } else {
+                  _controller.play();
+                }
+              });
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+    }
+  }
