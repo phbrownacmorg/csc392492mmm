@@ -7,7 +7,16 @@ import 'package:file_picker/file_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MusicSheetWidget extends StatefulWidget {
-  const MusicSheetWidget({super.key});
+  final String? documentId;
+  final Map<String, dynamic>? initialData;
+
+  const MusicSheetWidget({
+    super.key,
+    this.documentId,
+    this.initialData,
+  });
+
+  bool get isEditing => documentId != null;
 
   @override
   State<MusicSheetWidget> createState() => _MusicSheetWidgetState();
@@ -20,6 +29,9 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
 
   Stream<Uint8List>? selectedVideoByteStream;
   String? selectedVideoName;
+
+  final Map<PlutoRow, Uint8List> selectedVideoBytesByRow = {};
+  final Map<PlutoRow, String> selectedVideoNamesByRow = {};
 
   final TextEditingController notesController = TextEditingController();
   final TextEditingController worksheetNameController = TextEditingController();
@@ -109,10 +121,10 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         checkReadOnly: _readOnlyHelperFunction,
       ),
       PlutoColumn(
-        title: 'H',
+        title: 'Th',
         field: 'thu',
         type: PlutoColumnType.number(),
-        width: 50,
+        width: 60,
         enableSorting: false,
         checkReadOnly: _readOnlyHelperFunction,
       ),
@@ -150,9 +162,44 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
       ),
     ];
 
-    rows = [
-      _createNewPracticeRow(),
-    ];
+    if (widget.initialData != null) {
+      worksheetNameController.text =
+        widget.initialData!['sheetName']?.toString() ?? '';
+
+      notesController.text =
+        widget.initialData!['notes']?.toString() ?? '';
+
+      final existingRows = widget.initialData!['rows'];
+
+      if (existingRows is List && existingRows.isNotEmpty) {
+        rows = existingRows.map<PlutoRow>((row) {
+          return PlutoRow(
+            cells: {
+              'piece': PlutoCell(value: row['piece'] ?? ''),
+              'tempo': PlutoCell(value: row['tempo'] ?? 80),
+              'passage': PlutoCell(value: row['passage'] ?? ''),
+              'problems': PlutoCell(value: row['problems'] ?? ''),
+              'strategy': PlutoCell(value: row['strategy'] ?? ''),
+              'mon': PlutoCell(value: row['mon'] ?? 0),
+              'tue': PlutoCell(value: row['tue'] ?? 0),
+              'wed': PlutoCell(value: row['wed'] ?? 0),
+              'thu': PlutoCell(value: row['thu'] ?? 0),
+              'fri': PlutoCell(value: row['fri'] ?? 0),
+              'sat': PlutoCell(value: row['sat'] ?? 0),
+              'sun': PlutoCell(value: row['sun'] ?? 0),
+              'videoName': PlutoCell(value: row['videoName']),
+              'videoUrl': PlutoCell(value: row['videoUrl']),
+              'mastery':
+                  PlutoCell(value: row['mastery'] ?? 'Not Mastered'),
+            },
+          );
+        }).toList();
+      } else {
+        rows = [_createNewPracticeRow()];
+      }
+    } else {
+      rows = [_createNewPracticeRow()];
+    }
 
     _fetchStrategiesFromFirestore();
     _fetchPiecesFromFirestore();
@@ -231,6 +278,8 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         'fri': PlutoCell(value: 0),
         'sat': PlutoCell(value: 0),
         'sun': PlutoCell(value: 0),
+        'videoName': PlutoCell(value: null),
+        'videoUrl': PlutoCell(value: null),
         'mastery': PlutoCell(value: 'Not Mastered'),
       },
     );
@@ -243,21 +292,45 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
       rows.add(_createNewPracticeRow());
     }
   }
-
   Future<void> _pickVideo() async {
-    PlatformFile? result = await FilePicker.pickFile(
+    final selectedRow = stateManager?.currentRow;
+
+    if (selectedRow == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Select a passage row first.'),
+        ),
+      );
+      return;
+    }
+
+    final result = await FilePicker.pickFile(
       type: FileType.video,
-      //withData: true,
     );
 
     if (result != null) {
+      final BytesBuilder videoBytes = BytesBuilder();
+
+      await for (final chunk in result.readAsByteStream()) {
+        videoBytes.add(chunk);
+      }
+
       setState(() {
-        selectedVideoByteStream = result.readAsByteStream();
-        selectedVideoName = result.name;
+        selectedVideoBytesByRow[selectedRow] = videoBytes.toBytes();
+        selectedVideoNamesByRow[selectedRow] = result.name;
       });
+
+      stateManager?.clearCurrentCell();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Video added to selected passage: ${result.name}'),
+        ),
+      );
     }
   }
-
   void _removeSelectedVideo() {
     setState(() {
       selectedVideoByteStream = null;
@@ -293,6 +366,8 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         'fri': row.cells['fri']?.value,
         'sat': row.cells['sat']?.value,
         'sun': row.cells['sun']?.value,
+        'videoName': row.cells['videoName']?.value,
+        'videoUrl': row.cells['videoUrl']?.value,
         'mastery': row.cells['mastery']?.value,
       };
     }).toList();
@@ -301,7 +376,6 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
       'sheetName': _getWorksheetName(),
       'rows': rowData,
       'notes': notesController.text.trim(),
-      'videoName': selectedVideoName,
       'createdAt': FieldValue.serverTimestamp(),
     };
   }
@@ -315,24 +389,36 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         return;
       }
 
-      String? videoUrl;
+      stateManager!.setEditing(false);
+      stateManager!.clearCurrentCell();
 
-      if (selectedVideoByteStream != null && selectedVideoName != null) {
-        final storageRef = FirebaseStorage.instance
-            .ref()
-            .child('music_sheet_videos/$selectedVideoName');
+      final gridRows = stateManager!.rows;
 
-        final BytesBuilder videoBytes = BytesBuilder();
-        await for (final chunk in selectedVideoByteStream!) {
-          videoBytes.add(chunk);
+      for (final row in gridRows) {
+        final videoBytes = selectedVideoBytesByRow[row];
+        final videoName = selectedVideoNamesByRow[row];
+
+        if (videoBytes != null && videoName != null) {
+          final uniqueVideoName =
+              '${DateTime.now().microsecondsSinceEpoch}_$videoName';
+
+          final storageRef = FirebaseStorage.instance
+              .ref()
+              .child('music_sheet_videos/$uniqueVideoName');
+
+          await storageRef.putData(
+            videoBytes,
+            SettableMetadata(contentType: 'video/mp4'),
+          );
+
+          final videoUrl = await storageRef.getDownloadURL();
+
+          row.cells['videoName']?.value = videoName;
+          row.cells['videoUrl']?.value = videoUrl;
         }
-
-        await storageRef.putData(videoBytes.toBytes());
-        videoUrl = await storageRef.getDownloadURL();
       }
 
       final data = _getSheetData();
-      data['videoUrl'] = videoUrl;
 
       final currentUser = FirebaseAuth.instance.currentUser;
 
@@ -341,7 +427,18 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         data['creatorEmail'] = currentUser.email;
       }
 
-      await FirebaseFirestore.instance.collection('music_sheets').add(data);
+      if (widget.isEditing) {
+        data.remove('createdAt');
+
+        await FirebaseFirestore.instance
+            .collection('music_sheets')
+            .doc(widget.documentId)
+            .update(data);
+      } else {
+        await FirebaseFirestore.instance
+            .collection('music_sheets')
+            .add(data);
+      }
 
       if (!mounted) return;
 
@@ -389,6 +486,11 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
                 columns: columns,
                 rows: rows,
                 onLoaded: (event) => stateManager = event.stateManager,
+
+                onChanged: (event) {
+                  event.row.cells[event.column.field]?.value = event.value;
+                },
+
                 configuration: PlutoGridConfiguration(
                   style: PlutoGridStyleConfig(
                     borderColor: Colors.grey,

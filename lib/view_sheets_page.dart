@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:video_player/video_player.dart';
+import 'music_sheet_widget.dart';
 
 class ViewSheetsPage extends StatefulWidget {
   const ViewSheetsPage({super.key});
@@ -210,10 +211,10 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
               Text(
                 'Days: M ${row['mon'] ?? 0}, T ${row['tue'] ?? 0}, W ${row['wed'] ?? 0}, H ${row['thu'] ?? 0}, F ${row['fri'] ?? 0}, Sat ${row['sat'] ?? 0}, Sun ${row['sun'] ?? 0}',
               ),
-              if (row['videoUrl'] != null)
-                const Text(
-                  'Video attached',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+              if (row['videoUrl'] != null &&
+                  row['videoUrl'].toString().isNotEmpty)
+                SheetVideoPlayer(
+                  videoUrl: row['videoUrl'].toString(),
                 ),
             ],
           ),
@@ -273,16 +274,23 @@ const SizedBox(height: 12),
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => EditSheetPage(
-                        documentId: documentId,
-                        sheetData: data,
+                      builder: (context) => Scaffold(
+                        appBar: AppBar(
+                          title: const Text('Edit Music Sheet'),
+                          backgroundColor: Colors.deepOrange,
+                        ),
+                        body: MusicSheetWidget(
+                          documentId: documentId,
+                          initialData: data,
+                        ),
                       ),
                     ),
                   );
                 },
                 icon: const Icon(Icons.edit),
                 label: const Text('Edit'),
-              ),
+              ),      
+
               TextButton.icon(
                 onPressed: () => _renameSheet(documentId, sheetName),
                 icon: const Icon(Icons.drive_file_rename_outline),
@@ -392,381 +400,6 @@ const SizedBox(height: 12),
   }
 }
 
-class EditRowData {
-  TextEditingController pieceController = TextEditingController();
-  TextEditingController tempoController = TextEditingController();
-  TextEditingController passageController = TextEditingController();
-  TextEditingController strategyController = TextEditingController();
-  TextEditingController masteryController = TextEditingController();
-
-  TextEditingController monController = TextEditingController();
-  TextEditingController tueController = TextEditingController();
-  TextEditingController wedController = TextEditingController();
-  TextEditingController thuController = TextEditingController();
-  TextEditingController friController = TextEditingController();
-  TextEditingController satController = TextEditingController();
-  TextEditingController sunController = TextEditingController();
-
-  List<dynamic> problems = [];
-  String? videoName;
-  String? videoUrl;
-}
-
-class EditSheetPage extends StatefulWidget {
-  final String documentId;
-  final Map<String, dynamic> sheetData;
-
-  const EditSheetPage({
-    super.key,
-    required this.documentId,
-    required this.sheetData,
-  });
-
-  @override
-  State<EditSheetPage> createState() => _EditSheetPageState();
-}
-
-class _EditSheetPageState extends State<EditSheetPage> {
-  late TextEditingController sheetNameController;
-  late TextEditingController studentNameController;
-  late TextEditingController notesController;
-
-  List<EditRowData> editableRows = [];
-  List<String> availableProblems = [];
-  List<String> availableStrategies = [];
-
-  @override
-  void initState() {
-    super.initState();
-
-    sheetNameController = TextEditingController(
-      text: widget.sheetData['sheetName']?.toString() ?? '',
-    );
-
-    studentNameController = TextEditingController(
-      text: widget.sheetData['studentName']?.toString() ?? '',
-    );
-
-    notesController = TextEditingController(
-      text: widget.sheetData['notes']?.toString() ?? '',
-    );
-
-    _fetchProblemsFromFirestore();
-    _fetchStrategiesFromFirestore();
-  
-
-    final rows = widget.sheetData['rows'];
-
-    if (rows is List) {
-      for (final row in rows) {
-        if (row is Map) {
-          final editRow = EditRowData();
-
-          editRow.pieceController.text = row['piece']?.toString() ?? '';
-          editRow.tempoController.text = row['tempo']?.toString() ?? '';
-          editRow.passageController.text = row['passage']?.toString() ?? '';
-          editRow.strategyController.text = row['strategy']?.toString() ?? '';
-          editRow.masteryController.text = row['mastery']?.toString() ?? '';
-
-          editRow.monController.text = row['mon']?.toString() ?? '0';
-          editRow.tueController.text = row['tue']?.toString() ?? '0';
-          editRow.wedController.text = row['wed']?.toString() ?? '0';
-          editRow.thuController.text = row['thu']?.toString() ?? '0';
-          editRow.friController.text = row['fri']?.toString() ?? '0';
-          editRow.satController.text = row['sat']?.toString() ?? '0';
-          editRow.sunController.text = row['sun']?.toString() ?? '0';
-
-          editRow.problems = row['problems'] is List ? row['problems'] : [];
-          editRow.videoName = row['videoName']?.toString();
-          editRow.videoUrl = row['videoUrl']?.toString();
-
-          editableRows.add(editRow);
-        }
-      }
-    }
-  }
-
-Future<void> _fetchProblemsFromFirestore() async {
-  final querySnapshot =
-      await FirebaseFirestore.instance.collection('Problems').get();
-
-  final problems = querySnapshot.docs
-      .map((doc) => doc['problem_name'].toString())
-      .toList();
-
-  setState(() {
-    availableProblems = problems;
-  });
-}
-
-Future<void> _fetchStrategiesFromFirestore() async {
-  final querySnapshot =
-      await FirebaseFirestore.instance.collection('Strategies').get();
-
-  final strategies = querySnapshot.docs
-      .map((doc) => doc['strategy_name'].toString())
-      .toList();
-
-  setState(() {
-    availableStrategies = strategies;
-  });
-}
-
-  Future<void> _saveChanges() async {
-    final updatedRows = editableRows.map((row) {
-      return {
-        'piece': row.pieceController.text.trim(),
-        'tempo': int.tryParse(row.tempoController.text.trim()) ?? 0,
-        'passage': row.passageController.text.trim(),
-        'strategy': row.strategyController.text.trim(),
-        'mastery': row.masteryController.text.trim(),
-        'problems': row.problems,
-        'videoName': row.videoName,
-        'videoUrl': row.videoUrl,
-        'mon': int.tryParse(row.monController.text.trim()) ?? 0,
-        'tue': int.tryParse(row.tueController.text.trim()) ?? 0,
-        'wed': int.tryParse(row.wedController.text.trim()) ?? 0,
-        'thu': int.tryParse(row.thuController.text.trim()) ?? 0,
-        'fri': int.tryParse(row.friController.text.trim()) ?? 0,
-        'sat': int.tryParse(row.satController.text.trim()) ?? 0,
-        'sun': int.tryParse(row.sunController.text.trim()) ?? 0,
-      };
-    }).toList();
-
-    await FirebaseFirestore.instance
-        .collection('music_sheets')
-        .doc(widget.documentId)
-        .update({
-      'sheetName': sheetNameController.text.trim(),
-      'studentName': studentNameController.text.trim(),
-      'notes': notesController.text.trim(),
-      'rows': updatedRows,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
-
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Sheet updated')),
-    );
-
-    Navigator.pop(context);
-  }
-
-  Widget _buildDayField(String label, TextEditingController controller) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.all(4),
-        child: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            labelText: label,
-            border: const OutlineInputBorder(),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEditableRow(EditRowData row, int index) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 20),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text(
-              'Passage ${index + 1}',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: row.pieceController,
-              decoration: const InputDecoration(
-                labelText: 'Piece',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: row.tempoController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Tempo',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: row.passageController,
-              decoration: const InputDecoration(
-                labelText: 'Passage',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 20),
-            DropdownButtonFormField<String>(
-  decoration: const InputDecoration(
-    labelText: 'Strategy',
-    border: OutlineInputBorder(),
-  ),
-  initialValue: availableStrategies.contains(row.strategyController.text)
-      ? row.strategyController.text
-      : null,
-  items: availableStrategies.map((strategy) {
-    return DropdownMenuItem<String>(
-      value: strategy,
-      child: Text(strategy),
-    );
-  }).toList(),
-  onChanged: (value) {
-    setState(() {
-      row.strategyController.text = value ?? '';
-    });
-  },
-),
-            const SizedBox(height: 20),
-            TextField(
-              controller: row.masteryController,
-              decoration: const InputDecoration(
-                labelText: 'Mastery',
-                border: OutlineInputBorder(),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-const Align(
-  alignment: Alignment.centerLeft,
-  child: Text(
-    'Problems',
-    style: TextStyle(fontWeight: FontWeight.bold),
-  ),
-),
-
-Column(
-  children: availableProblems.map((problem) {
-    final isSelected = row.problems.contains(problem);
-
-    return CheckboxListTile(
-      title: Text(problem),
-      value: isSelected,
-      onChanged: (value) {
-        setState(() {
-          if (value == true) {
-            row.problems.add(problem);
-          } else {
-            row.problems.remove(problem);
-          }
-        });
-      },
-    );
-  }).toList(),
-),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                _buildDayField('M', row.monController),
-                _buildDayField('T', row.tueController),
-                _buildDayField('W', row.wedController),
-                _buildDayField('H', row.thuController),
-                _buildDayField('F', row.friController),
-                _buildDayField('Sat', row.satController),
-                _buildDayField('Sun', row.sunController),
-              ],
-            ),
-            const SizedBox(height: 10),
-            if (row.videoUrl != null)
-              const Text('Video attached'),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    sheetNameController.dispose();
-    studentNameController.dispose();
-    notesController.dispose();
-
-    for (final row in editableRows) {
-      row.pieceController.dispose();
-      row.tempoController.dispose();
-      row.passageController.dispose();
-      row.strategyController.dispose();
-      row.masteryController.dispose();
-      row.monController.dispose();
-      row.tueController.dispose();
-      row.wedController.dispose();
-      row.thuController.dispose();
-      row.friController.dispose();
-      row.satController.dispose();
-      row.sunController.dispose();
-    }
-
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Sheet'),
-        backgroundColor: Colors.deepOrange,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(
-              controller: sheetNameController,
-              decoration: const InputDecoration(
-                labelText: 'Sheet Name',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: studentNameController,
-              decoration: const InputDecoration(
-                labelText: 'Student Name',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: notesController,
-              maxLines: 5,
-              decoration: const InputDecoration(
-                labelText: 'Notes',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ...editableRows.asMap().entries.map(
-                  (entry) => _buildEditableRow(entry.value, entry.key),
-                ),
-            const SizedBox(height: 30),
-            ElevatedButton.icon(
-              onPressed: _saveChanges,
-              icon: const Icon(Icons.save),
-              label: const Text('Save Changes'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 class SheetVideoPlayer extends StatefulWidget {
   final String videoUrl;
 
@@ -781,18 +414,34 @@ class SheetVideoPlayer extends StatefulWidget {
 
 class _SheetVideoPlayerState extends State<SheetVideoPlayer> {
   late VideoPlayerController _controller;
+  bool _hasError = false;
 
   @override
   void initState() {
     super.initState();
 
     _controller =
-        VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
-          ..initialize().then((_) {
-            if (mounted) {
-              setState(() {});
-            }
-          });
+        VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+
+    _initializeVideo();
+  }
+
+  Future<void> _initializeVideo() async {
+    try {
+      await _controller.initialize().timeout(
+        const Duration(seconds: 10),
+      );
+
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+        });
+      }
+    }
   }
 
   @override
@@ -803,6 +452,19 @@ class _SheetVideoPlayerState extends State<SheetVideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
+    if (_hasError) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          'Video unavailable',
+          style: TextStyle(
+            fontStyle: FontStyle.italic,
+            color: Colors.grey,
+          ),
+        ),
+      );
+    }
+
     if (!_controller.value.isInitialized) {
       return const Padding(
         padding: EdgeInsets.all(16),
@@ -825,20 +487,20 @@ class _SheetVideoPlayerState extends State<SheetVideoPlayer> {
                 _controller.value.isPlaying
                     ? Icons.pause
                     : Icons.play_arrow,
+              ),
+              onPressed: () {
+                setState(() {
+                  if (_controller.value.isPlaying) {
+                    _controller.pause();
+                  } else {
+                    _controller.play();
+                  }
+                });
+              },
             ),
-            onPressed: () {
-              setState(() {
-                if (_controller.value.isPlaying) {
-                  _controller.pause();
-                } else {
-                  _controller.play();
-                }
-              });
-            },
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-    }
+    );
   }
+}
