@@ -38,7 +38,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
 
   List<String> strategies = [];
   List<String> pieces = [];
-  //avoid duplicaring code for the practice log
+  //avoid duplicating code for the practice log
   bool _readOnlyHelperFunction(PlutoRow row, PlutoCell cell) {
       final piece = row.cells['strategy']?.value?.toString().trim() ?? '';
       return piece.isEmpty;

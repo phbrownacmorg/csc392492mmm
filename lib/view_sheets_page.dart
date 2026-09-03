@@ -206,7 +206,7 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
               Text('Strategy: ${row['strategy'] ?? ''}'),
               Text('Mastery: ${row['mastery'] ?? ''}'),
               Text(
-                'Problems: ${problems is List ? problems.join(', ') : ''}',
+                'Problems: ${problems is List ? problems.join(', ') : (problems is String ? problems : '')}',
               ),
               Text(
                 'Days: M ${row['mon'] ?? 0}, T ${row['tue'] ?? 0}, W ${row['wed'] ?? 0}, H ${row['thu'] ?? 0}, F ${row['fri'] ?? 0}, Sat ${row['sat'] ?? 0}, Sun ${row['sun'] ?? 0}',
