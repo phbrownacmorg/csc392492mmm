@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:multi_dropdown/multi_dropdown.dart';
 
 class MusicSheetWidget extends StatefulWidget {
   final String? documentId;
@@ -80,10 +81,41 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         title: 'Problems',
         field: 'problems',
         type: PlutoColumnType.text(),
+        width: 220,
         enableSorting: false,
-        checkReadOnly: (row, cell) {
-          final piece = row.cells['piece']?.value?.toString().trim() ?? '';
-          return piece.isEmpty;
+        readOnly: true,
+        renderer: (rendererContext) {
+          final currentValue = rendererContext.cell.value;
+
+          final selectedProblems = currentValue is List
+              ? currentValue.map((e) => e.toString()).toList()
+              : currentValue.toString().trim().isEmpty
+                  ? <String>[]
+                  : [currentValue.toString()];
+
+          final problemOptions = [
+            'Too Slow',
+            'Too Fast',
+            'Wrong Notes',
+            'Rhythm',
+            'Dynamics',
+            'Articulation',
+            'Fingering',
+            'Other...',
+          ];
+
+          return MultiDropdown<String>(
+            items: problemOptions.map((problem) {
+              return DropdownItem<String>(
+                label: problem,
+                value: problem,
+                selected: selectedProblems.contains(problem),
+              );
+            }).toList(),
+            onSelectionChange: (selectedItems) {
+              rendererContext.cell.value = selectedItems;
+            },
+          );
         },
       ),
       PlutoColumn(
@@ -153,6 +185,14 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         checkReadOnly: _readOnlyHelperFunction,
       ),
       PlutoColumn(
+        title: 'Video',
+        field: 'videoName',
+        type: PlutoColumnType.text(),
+        width: 160,
+        enableSorting: false,
+        readOnly: true,
+      ),
+      PlutoColumn(
         title: 'Mastery',
         field: 'mastery',
         type: PlutoColumnType.select(['Mastered', 'Not Mastered']),
@@ -187,7 +227,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
               'fri': PlutoCell(value: row['fri'] ?? 0),
               'sat': PlutoCell(value: row['sat'] ?? 0),
               'sun': PlutoCell(value: row['sun'] ?? 0),
-              'videoName': PlutoCell(value: row['videoName']),
+              'videoName': PlutoCell(value: row['videoName'] ?? ''),
               'videoUrl': PlutoCell(value: row['videoUrl']),
               'mastery':
                   PlutoCell(value: row['mastery'] ?? 'Not Mastered'),
@@ -278,7 +318,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         'fri': PlutoCell(value: 0),
         'sat': PlutoCell(value: 0),
         'sun': PlutoCell(value: 0),
-        'videoName': PlutoCell(value: null),
+        'videoName': PlutoCell(value: ''),
         'videoUrl': PlutoCell(value: null),
         'mastery': PlutoCell(value: 'Not Mastered'),
       },
@@ -303,6 +343,36 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
       );
       return;
     }
+    final existingVideoName =
+        selectedRow.cells['videoName']?.value?.toString().trim() ?? '';
+
+    if (existingVideoName.isNotEmpty) {
+      final shouldReplace = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Replace Video?'),
+            content: Text(
+              'This passage already has a video:\n$existingVideoName\n\nDo you want to replace it?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Replace'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (shouldReplace != true) {
+        return;
+      }
+    }
 
     final result = await FilePicker.pickFile(
       type: FileType.video,
@@ -318,6 +388,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
       setState(() {
         selectedVideoBytesByRow[selectedRow] = videoBytes.toBytes();
         selectedVideoNamesByRow[selectedRow] = result.name;
+        selectedRow.cells['videoName']?.value = result.name;
       });
 
       stateManager?.clearCurrentCell();
@@ -331,6 +402,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
       );
     }
   }
+
   void _removeSelectedVideo() {
     setState(() {
       selectedVideoByteStream = null;

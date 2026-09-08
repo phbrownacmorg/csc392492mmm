@@ -38,6 +38,7 @@ dependencies:
   flutter_facebook_auth: ^7.1.6
   flutter_svg: ^2.3.0
   video_player: ^2.14.0
+  multi_dropdown: ^3.2.2
 
 dev_dependencies:
   flutter_test:
