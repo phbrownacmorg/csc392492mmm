@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:multi_dropdown/multi_dropdown.dart';
 
 class MusicSheetWidget extends StatefulWidget {
   final String? documentId;
@@ -44,7 +43,19 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
       final piece = row.cells['strategy']?.value?.toString().trim() ?? '';
       return piece.isEmpty;
   }
+  String _problemsLabel(dynamic value) {
+    if (value is! List || value.isEmpty) {
+      return 'Select';
+    }
 
+    final problems = value.map((e) => e.toString()).toList();
+
+    if (problems.length == 1) {
+      return problems.first;
+    }
+
+    return '${problems.first} +${problems.length - 1}';
+  }
 
   @override
   void initState() {
@@ -103,18 +114,131 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
             'Fingering',
             'Other...',
           ];
+          final problemsLabel = _problemsLabel(currentValue);
 
-          return MultiDropdown<String>(
-            items: problemOptions.map((problem) {
-              return DropdownItem<String>(
-                label: problem,
-                value: problem,
-                selected: selectedProblems.contains(problem),
+          return InkWell(
+            onTap: () async {
+              final updatedProblems = List<String>.from(selectedProblems);
+
+              await showDialog(
+                context: context,
+                builder: (dialogContext) {
+                  return StatefulBuilder(
+                    builder: (context, setDialogState) {
+                      return AlertDialog(
+                        title: const Text('Problems'),
+                        contentPadding: EdgeInsets.zero,
+                        content: SizedBox(
+                          width: 280,
+                          child: ListView(
+                            shrinkWrap: true,
+                            children: problemOptions.map((problem) {
+                              return CheckboxListTile(
+                                title: Text(problem),
+                                value: updatedProblems.contains(problem),
+                                controlAffinity: ListTileControlAffinity.trailing,
+                                onChanged: (selected) async {
+                                  if (problem == 'Other...' && selected == true) {
+                                    final controller = TextEditingController();
+
+                                    final customProblem = await showDialog<String>(
+                                      context: context,
+                                      builder: (context) {
+                                        return AlertDialog(
+                                          title: const Text('Other Problem'),
+                                          content: TextField(
+                                            controller: controller,
+                                            autofocus: true,
+                                            decoration: const InputDecoration(
+                                              labelText: 'Describe your problem',
+                                              hintText: 'Type your problem here...',
+                                              border: OutlineInputBorder(),
+                                            ),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.pop(context);
+                                              },
+                                              child: const Text('Cancel'),
+                                            ),
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.pop(
+                                                  context,
+                                                  controller.text.trim(),
+                                                );
+                                              },
+                                              child: const Text('Add'),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+
+                                    controller.dispose();
+
+                                    if (customProblem != null &&
+                                        customProblem.trim().isNotEmpty) {
+                                      setDialogState(() {
+                                        updatedProblems.remove('Other...');
+
+                                        if (!updatedProblems.contains(customProblem.trim())) {
+                                          updatedProblems.add(customProblem.trim());
+                                        }
+                                      });
+                                    }
+
+                                    return;
+                                  }
+
+                                  setDialogState(() {
+                                    if (selected == true) {
+                                      updatedProblems.add(problem);
+                                    } else {
+                                      updatedProblems.remove(problem);
+                                    }
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(dialogContext);
+                            },
+                            child: const Text('Done'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
               );
-            }).toList(),
-            onSelectionChange: (selectedItems) {
-              rendererContext.cell.value = selectedItems;
+
+              rendererContext.cell.value = updatedProblems;
+              rendererContext.stateManager.notifyListeners();
             },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              alignment: Alignment.centerLeft,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      problemsLabel,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const Icon(
+                    Icons.arrow_drop_down,
+                    size: 20,
+                  ),
+                ],
+              ),
+            ),
           );
         },
       ),
