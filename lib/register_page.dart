@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:fancy_password_field/fancy_password_field.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:music_app/services/auth_service.dart';
+
 
 
 class RegisterPage extends StatefulWidget {
@@ -31,6 +33,30 @@ class _RegisterPageState extends State<RegisterPage> {
   // Tracks whether registration is currently happening.
   // This prevents users from spamming the register button.
   bool _isLoading = false;
+
+  List<String> _instructors = [];
+
+  Future<void> _loadInstructors() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .where('role', isEqualTo: 'Instructor')
+        .get();
+
+    setState(() {
+      _instructors = snapshot.docs.map((doc) {
+        final data = doc.data();
+        final firstName = data['firstName'] ?? '';
+        final lastName = data['lastName'] ?? '';
+        return '$firstName $lastName'.trim();
+      }).toList();
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInstructors();
+  }
 
   @override
   void dispose() {
@@ -232,7 +258,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
 
                   DropdownMenuEntry(
-                    value: 'admin',
+                    value: 'Instructor',
                     label: 'Instructor',
                   ),
                 ],
@@ -253,11 +279,17 @@ class _RegisterPageState extends State<RegisterPage> {
                 label: const Text('Select Instructor'),
                 requestFocusOnTap: false,
                 enableSearch: false,
-                dropdownMenuEntries: <DropdownMenuEntry>[
-                  DropdownMenuEntry(value: 'None', label: 'None'),
-                  DropdownMenuEntry(value: 'Dr. Thornburg', label: 'Dr. Thornburg'),
-                  DropdownMenuEntry(value: 'Dr. Brown', label: 'Dr. Brown'),
-                  DropdownMenuEntry(value: 'Dr. McMurray', label: 'Dr. McMurray'),
+                dropdownMenuEntries: [
+                  const DropdownMenuEntry(
+                    value: 'None',
+                    label: 'None',
+                  ),
+                  ..._instructors.map(
+                    (instructor) => DropdownMenuEntry(
+                      value: instructor,
+                      label: instructor,
+                    ),
+                  ),
                 ],
               ),
               SizedBox(height: 20),
