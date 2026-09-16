@@ -114,6 +114,15 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
             'Fingering',
             'Other...',
           ];
+          
+          for (final problem in selectedProblems) {
+            if (!problemOptions.contains(problem)) {
+              problemOptions.insert(
+                problemOptions.length - 1,
+                problem,
+              );
+            }
+          }
           final problemsLabel = _problemsLabel(currentValue);
 
           return InkWell(
