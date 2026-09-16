@@ -317,6 +317,47 @@ const SizedBox(height: 12),
         title: const Text('View Sheets'),
         centerTitle: true,
         backgroundColor: Colors.deepOrange,
+        actions: [
+          TextButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('New Sheet'),
+                      backgroundColor: Colors.deepOrange,
+                    ),
+                    body: const MusicSheetWidget(),
+                  ),
+                ),
+              );
+            },
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.deepOrange,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 14,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
+            icon: const Icon(
+              Icons.add,
+              size: 24,
+            ),
+            label: const Text(
+              'New Sheet',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),

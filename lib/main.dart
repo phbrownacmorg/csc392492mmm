@@ -11,7 +11,6 @@ import 'firebase_options.dart';
 import 'login_page.dart';
 //import 'register_page.dart';
 import 'view_sheets_page.dart';
-import 'create_music_sheet_page.dart';
 import 'view_database_page.dart';
 import 'profile_page.dart';
 import 'dart:typed_data';
@@ -357,13 +356,6 @@ class MyHomePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const ProfilePage()),
-                  );
-                }),
-                _buildButton('Create Music Sheet', context, () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => CreateMusicSheetPage()),
-                    // MaterialPageRoute(builder: (context) => EditProfile()),  // For debug only
                   );
                 }),
                 _buildButton('View Sheets', context, () {
