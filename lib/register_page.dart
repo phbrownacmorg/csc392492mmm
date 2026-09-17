@@ -70,7 +70,7 @@ class _RegisterPageState extends State<RegisterPage> {
     _instructorController.dispose();
     _emailController.dispose();
     _passTextController.dispose();
-    _passTextController.dispose();
+    //_passTextController.dispose();
     _passwordController.dispose();
     _confirmPassTextController.dispose();
     super.dispose();
