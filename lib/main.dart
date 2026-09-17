@@ -17,6 +17,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'admin_page.dart';
+import 'instructor_page.dart';
 
 Future<void> main() async {
 
@@ -211,6 +212,10 @@ class RoleRedirect extends StatelessWidget {
         } else if (role == 'admin') {
 
           return AdminPage();
+
+        } else if (role == 'instructor') {
+
+          return const InstructorPage();
 
         } else {
 
