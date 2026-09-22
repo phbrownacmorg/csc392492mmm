@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'instruct_student.dart';
 
 class ViewStudentsPage extends StatefulWidget {
   const ViewStudentsPage({super.key});
@@ -176,6 +177,22 @@ class _ViewStudentsPageState extends State<ViewStudentsPage> {
                 child: ListTile(
                   title: Text('$firstName $lastName'),
                   subtitle: Text(email),
+                  trailing: TextButton(
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => InstructStudentPage(
+                            studentId: student['uid'],
+                            studentName: '$firstName $lastName',
+                          ),
+                        ),
+                      );
+
+                      setState(() {});
+                    },
+                    child: const Text('Manage'),
+                  ),
                 ),
               );
             },
