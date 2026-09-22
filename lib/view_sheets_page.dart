@@ -5,7 +5,12 @@ import 'package:video_player/video_player.dart';
 import 'music_sheet_widget.dart';
 
 class ViewSheetsPage extends StatefulWidget {
-  const ViewSheetsPage({super.key});
+  final String? studentId;
+
+  const ViewSheetsPage({
+    super.key,
+    this.studentId,
+  });
 
   @override
   State<ViewSheetsPage> createState() => _ViewSheetsPageState();
@@ -16,13 +21,62 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
 
   String _searchText = '';
   bool _showAllSheets = false;
+  bool _showAssignedSheets = true;
+  List<String> _assignedSheetIds = [];
 
+  @override
+  void initState() {
+    super.initState();
+    _loadAssignedSheets();
+  }
+  
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
   }
+  Future<void> _loadAssignedSheets() async {
+    if (widget.studentId == null) {
+      return;
+    }
 
+    final studentDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.studentId)
+        .get();
+
+    if (studentDoc.exists) {
+      final data = studentDoc.data();
+      final assignedSheets = data?['assignedSheets'];
+
+      if (assignedSheets is List) {
+        setState(() {
+          _assignedSheetIds =
+              assignedSheets.map((sheetId) => sheetId.toString()).toList();
+        });
+      }
+    }
+}
+  Future<void> _assignSheet(String sheetId) async {
+      if (widget.studentId == null) {
+        return;
+      }
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.studentId)
+          .update({
+        'assignedSheets': FieldValue.arrayUnion([sheetId]),
+      });
+
+      await _loadAssignedSheets();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sheet assigned successfully')),
+      );
+    }
   Stream<QuerySnapshot<Map<String, dynamic>>> _getSheetsStream() {
     final currentUser = FirebaseAuth.instance.currentUser;
 
@@ -269,6 +323,14 @@ const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
+              if (widget.studentId != null &&
+                  !_assignedSheetIds.contains(documentId))
+                TextButton.icon(
+                  onPressed: () => _assignSheet(documentId),
+                  icon: const Icon(Icons.assignment_add),
+                  label: const Text('Assign'),
+                ),
+
               TextButton.icon(
                 onPressed: () {
                   Navigator.push(
@@ -380,7 +442,21 @@ const SizedBox(height: 12),
               const Text(
                 'No user is logged in, so all sheets are shown.',
               ),
-
+            if (widget.studentId != null)
+              SwitchListTile(
+                title: const Text('Show assigned sheets'),
+                subtitle: Text(
+                  _showAssignedSheets
+                      ? 'Showing sheets assigned to this student'
+                      : 'Showing sheets not assigned to this student',
+                ),
+                value: _showAssignedSheets,
+                onChanged: (value) {
+                  setState(() {
+                    _showAssignedSheets = value;
+                  });
+                },
+              ),
             const SizedBox(height: 10),
 
             TextField(
@@ -414,7 +490,19 @@ const SizedBox(height: 12),
                   final docs = snapshot.data?.docs ?? [];
 
                   final filteredDocs = docs.where((doc) {
-                    return _sheetMatchesSearch(doc.data());
+                    if (!_sheetMatchesSearch(doc.data())) {
+                      return false;
+                    }
+
+                    if (widget.studentId != null) {
+                      if (_showAssignedSheets) {
+                        return _assignedSheetIds.contains(doc.id);
+                      } else {
+                        return !_assignedSheetIds.contains(doc.id);
+                      }
+                    }
+
+                    return true;
                   }).toList();
 
                   if (filteredDocs.isEmpty) {

@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'profile_page.dart';
 import 'view_sheets_page.dart';
 import 'view_database_page.dart';
+import 'view_students.dart';
 
 class InstructorPage extends StatelessWidget {
   const InstructorPage({super.key});
@@ -47,6 +48,19 @@ class InstructorPage extends StatelessWidget {
                 );
               },
             ),
+
+            _buildButton(
+              'View Students',
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ViewStudentsPage(),
+                  ),
+                );
+              },
+            ),
+            
             _buildButton(
               'View Sheets',
               () {
