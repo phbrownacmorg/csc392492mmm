@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:music_app/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:music_app/edit_profile.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -52,6 +53,31 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _loadProfile() async {
     final data = await AuthService().getUserData();
+    final currentUser = FirebaseAuth.instance.currentUser;
+
+    final studentOfSnapshot = await FirebaseFirestore.instance
+        .collection('StudentOf')
+        .where('studentId', isEqualTo: currentUser?.uid)
+        .get();
+    final instructorNames = <String>[];
+
+    for (final relation in studentOfSnapshot.docs) {
+      final instructorId = relation.data()['instructorId'];
+
+      final instructorDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(instructorId)
+          .get();
+
+      if (instructorDoc.exists) {
+        final instructorData = instructorDoc.data();
+        final firstName = instructorData?['firstName'] ?? '';
+        final lastName = instructorData?['lastName'] ?? '';
+
+        instructorNames.add('$firstName $lastName'.trim());
+      }
+    }
+
     // print('User data $data');  // Debug check
     if (data != null) {
       setState(() {
@@ -61,7 +87,9 @@ class _ProfilePageState extends State<ProfilePage> {
         email = data['email'] ?? '[No Email Linked]';
         role = data['role'] ?? '[No Role Set]';
         phone = data['phone'] ?? '[No Phone Number Set]';
-        myInstructors = data['myInstructors']?.join(', ') ?? '[No Instructors Set]';
+        myInstructors = instructorNames.isNotEmpty
+            ? instructorNames.join(', ')
+            : '[No Instructors Set]';
         problems = data['problems']?.join(', ') ?? '[No Problems Found]';
         assignedSheets = data['assignedSheets']?.join(', ') ?? '[No Sheets Assigned]';
         completedSheets = data['completedSheets']?.join(', ') ?? '[No Sheets Completed]';
