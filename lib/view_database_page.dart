@@ -32,12 +32,13 @@ class _CreateDatabaseFormFormState extends State<DatabaseForm> {
 
 //temp use strings for database collections untill database collection loading logic is possible.
 final List<Collection> _collections = [
-    Collection('Problems', ['problem_name', 'problem_id'], null),
-    Collection('Solutions', ['strategy_name', 'solution_id'], null),
-    Collection('Strategies', ['strategy_name'], null),
-    Collection('users', ['username', 'email'], null),
-    Collection('music_sheets', ['title', 'sheet_id'], null)
-  ];
+  Collection('Problems', ['problem_name', 'problem_id'], null),
+  Collection('Solutions', ['strategy_name', 'solution_id'], null),
+  Collection('Strategies', ['strategy_name'], null),
+  Collection('users', ['username', 'email'], null),
+  Collection('music_sheets', ['title', 'sheet_id'], null),
+  Collection('StudentOf', ['studentId', 'instructorId'], null)
+];
 
   @override
   void initState() {

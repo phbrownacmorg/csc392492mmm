@@ -34,7 +34,8 @@ class _RegisterPageState extends State<RegisterPage> {
   // This prevents users from spamming the register button.
   bool _isLoading = false;
 
-  List<String> _instructors = [];
+  List<Map<String, String>> _instructors = [];
+  String? _selectedInstructorUid;
 
   Future<void> _loadInstructors() async {
     final snapshot = await FirebaseFirestore.instance
@@ -47,7 +48,11 @@ class _RegisterPageState extends State<RegisterPage> {
         final data = doc.data();
         final firstName = data['firstName'] ?? '';
         final lastName = data['lastName'] ?? '';
-        return '$firstName $lastName'.trim();
+
+        return <String, String>{
+          'uid': data['uid']?.toString() ?? doc.id,
+          'name': '$firstName $lastName'.trim(),
+        };
       }).toList();
     });
   }
@@ -127,6 +132,16 @@ class _RegisterPageState extends State<RegisterPage> {
 
           role: _roleController.text,
         );
+      final newUser = FirebaseAuth.instance.currentUser;
+
+      if (_roleController.text == 'Student' &&
+          _selectedInstructorUid != null &&
+          newUser != null) {
+        await FirebaseFirestore.instance.collection('StudentOf').add({
+          'studentId': newUser.uid,
+          'instructorId': _selectedInstructorUid,
+        });
+      }  
 
         // Success message shown to user.
         snackBarMessage('Registration successful');
@@ -279,6 +294,9 @@ class _RegisterPageState extends State<RegisterPage> {
                 label: const Text('Select Instructor'),
                 requestFocusOnTap: false,
                 enableSearch: false,
+                onSelected: (value) {
+                  _selectedInstructorUid = value;
+                },
                 dropdownMenuEntries: [
                   const DropdownMenuEntry(
                     value: 'None',
@@ -286,8 +304,8 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   ..._instructors.map(
                     (instructor) => DropdownMenuEntry(
-                      value: instructor,
-                      label: instructor,
+                      value: instructor['uid'],
+                      label: instructor['name'] ?? '',
                     ),
                   ),
                 ],
