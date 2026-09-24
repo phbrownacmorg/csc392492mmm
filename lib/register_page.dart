@@ -111,7 +111,40 @@ class _RegisterPageState extends State<RegisterPage> {
 
       return;
     }
+    if (_selectedInstructorUid != null) {
+      final selectedInstructor = _instructors.firstWhere(
+        (instructor) => instructor['uid'] == _selectedInstructorUid,
+      );
 
+      final instructorName = selectedInstructor['name'] ?? 'this instructor';
+
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Confirm Instructor'),
+            content: Text(
+              'Has $instructorName accepted you as a student?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('No'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Yes'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (confirmed != true) {
+        setState(() => _isLoading = false);
+        return;
+      }
+    }
     try {
 
       // Checks if email already exists in Firebase.
@@ -132,16 +165,15 @@ class _RegisterPageState extends State<RegisterPage> {
 
           role: _roleController.text,
         );
-      final newUser = FirebaseAuth.instance.currentUser;
 
-      if (_roleController.text == 'Student' &&
-          _selectedInstructorUid != null &&
-          newUser != null) {
-        await FirebaseFirestore.instance.collection('StudentOf').add({
-          'studentId': newUser.uid,
-          'instructorId': _selectedInstructorUid,
-        });
-      }  
+        final newUser = FirebaseAuth.instance.currentUser;
+
+        if (_selectedInstructorUid != null && newUser != null) {
+          await FirebaseFirestore.instance.collection('StudentOf').add({
+            'studentId': newUser.uid,
+            'instructorId': _selectedInstructorUid,
+          });
+        }
 
         // Success message shown to user.
         snackBarMessage('Registration successful');
@@ -295,7 +327,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 requestFocusOnTap: false,
                 enableSearch: false,
                 onSelected: (value) {
-                  _selectedInstructorUid = value;
+                  _selectedInstructorUid = value == 'None' ? null : value;
                 },
                 dropdownMenuEntries: [
                   const DropdownMenuEntry(
