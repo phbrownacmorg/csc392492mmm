@@ -36,13 +36,16 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
     super.dispose();
   }
   Future<void> _loadAssignedSheets() async {
-    if (widget.studentId == null) {
+    final studentId =
+        widget.studentId ?? FirebaseAuth.instance.currentUser?.uid;
+
+    if (studentId == null) {
       return;
     }
 
     final studentDoc = await FirebaseFirestore.instance
         .collection('users')
-        .doc(widget.studentId)
+        .doc(studentId)
         .get();
 
     if (studentDoc.exists) {
@@ -104,7 +107,9 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
     Query<Map<String, dynamic>> query =
         FirebaseFirestore.instance.collection('music_sheets');
 
-    if (currentUser != null && !_showAllSheets) {
+    if (currentUser != null &&
+        !_showAllSheets &&
+        widget.studentId != null) {
       query = query.where('userId', isEqualTo: currentUser.uid);
     }
 
@@ -415,20 +420,24 @@ const SizedBox(height: 12),
         backgroundColor: Colors.deepOrange,
         actions: [
           TextButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => Scaffold(
-                    appBar: AppBar(
-                      title: const Text('New Sheet'),
-                      backgroundColor: Colors.deepOrange,
+            onPressed: () async {
+                final newSheetId = await Navigator.push<String>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Scaffold(
+                      appBar: AppBar(
+                        title: const Text('New Sheet'),
+                        backgroundColor: Colors.deepOrange,
+                      ),
+                      body: const MusicSheetWidget(),
                     ),
-                    body: const MusicSheetWidget(),
                   ),
-                ),
-              );
-            },
+                );
+
+                if (newSheetId != null && widget.studentId != null) {
+                  await _assignSheet(newSheetId);
+                }
+              },
             style: TextButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: Colors.deepOrange,
@@ -536,7 +545,9 @@ const SizedBox(height: 12),
                       }
                     }
 
-                    return true;
+                    // Student viewing their own View Sheets page:
+                    // show sheets assigned to them.
+                    return _assignedSheetIds.contains(doc.id);
                   }).toList();
 
                   if (filteredDocs.isEmpty) {

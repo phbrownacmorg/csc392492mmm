@@ -640,9 +640,13 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
             .doc(widget.documentId)
             .update(data);
       } else {
-        await FirebaseFirestore.instance
+        final newSheet = await FirebaseFirestore.instance
             .collection('music_sheets')
             .add(data);
+
+        if (mounted) {
+          Navigator.pop(context, newSheet.id);
+        }
       }
 
       if (!mounted) return;
