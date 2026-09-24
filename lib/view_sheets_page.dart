@@ -77,6 +77,27 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
         const SnackBar(content: Text('Sheet assigned successfully')),
       );
     }
+    Future<void> _unassignSheet(String sheetId) async {
+      if (widget.studentId == null) {
+        return;
+      }
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.studentId)
+          .update({
+        'assignedSheets': FieldValue.arrayRemove([sheetId]),
+      });
+
+      await _loadAssignedSheets();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sheet unassigned successfully')),
+      );
+    }
+
   Stream<QuerySnapshot<Map<String, dynamic>>> _getSheetsStream() {
     final currentUser = FirebaseAuth.instance.currentUser;
 
@@ -323,12 +344,25 @@ const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              if (widget.studentId != null &&
-                  !_assignedSheetIds.contains(documentId))
+              if (widget.studentId != null)
                 TextButton.icon(
-                  onPressed: () => _assignSheet(documentId),
-                  icon: const Icon(Icons.assignment_add),
-                  label: const Text('Assign'),
+                  onPressed: () {
+                    if (_assignedSheetIds.contains(documentId)) {
+                      _unassignSheet(documentId);
+                    } else {
+                      _assignSheet(documentId);
+                    }
+                  },
+                  icon: Icon(
+                    _assignedSheetIds.contains(documentId)
+                        ? Icons.remove_circle_outline
+                        : Icons.assignment_add,
+                  ),
+                  label: Text(
+                    _assignedSheetIds.contains(documentId)
+                        ? 'Unassign'
+                        : 'Assign',
+                  ),
                 ),
 
               TextButton.icon(

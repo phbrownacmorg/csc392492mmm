@@ -19,6 +19,13 @@ class InstructStudentPage extends StatelessWidget {
 
     if (currentUser == null) return;
 
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(studentId)
+        .update({
+      'assignedSheets': [],
+    });
+
     final snapshot = await FirebaseFirestore.instance
         .collection('StudentOf')
         .where('studentId', isEqualTo: studentId)
@@ -60,7 +67,31 @@ class InstructStudentPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => _removeStudent(context),
+              onPressed: () async {
+                final shouldRemove = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Remove Student'),
+                    content: Text(
+                      'Are you sure you want to remove $studentName?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Remove'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (shouldRemove == true && context.mounted) {
+                  await _removeStudent(context);
+                }
+              },
               child: const Text('Remove Student'),
             ),
           ],
