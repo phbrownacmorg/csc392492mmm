@@ -366,7 +366,9 @@ class MyHomePage extends StatelessWidget {
                 _buildButton('View Sheets', context, () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ViewSheetsPage()),
+                    MaterialPageRoute(
+                      builder: (context) => ViewSheetsPage(studentView: true),
+                    ),
                   );
                 }),
                 _buildButton('Database Debug', context, () {

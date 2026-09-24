@@ -6,10 +6,12 @@ import 'music_sheet_widget.dart';
 
 class ViewSheetsPage extends StatefulWidget {
   final String? studentId;
+  final bool studentView;
 
   const ViewSheetsPage({
     super.key,
     this.studentId,
+    this.studentView = false,
   });
 
   @override
@@ -109,7 +111,7 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
 
     if (currentUser != null &&
         !_showAllSheets &&
-        widget.studentId != null) {
+        !widget.studentView) {
       query = query.where('userId', isEqualTo: currentUser.uid);
     }
 
@@ -545,9 +547,17 @@ const SizedBox(height: 12),
                       }
                     }
 
-                    // Student viewing their own View Sheets page:
-                    // show sheets assigned to them.
-                    return _assignedSheetIds.contains(doc.id);
+                    // Student viewing their own View Sheets page.
+                    if (widget.studentView) {
+                      if (_showAllSheets) {
+                        return true;
+                      }
+
+                      return _assignedSheetIds.contains(doc.id);
+                    }
+
+                    // Instructor viewing View Sheets normally.
+                    return true;
                   }).toList();
 
                   if (filteredDocs.isEmpty) {
