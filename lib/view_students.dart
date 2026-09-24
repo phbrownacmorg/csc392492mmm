@@ -113,6 +113,30 @@ class _ViewStudentsPageState extends State<ViewStudentsPage> {
 
                                     if (currentUser == null) return;
 
+                                    final confirmed = await showDialog<bool>(
+                                      context: context,
+                                      builder: (context) {
+                                        return AlertDialog(
+                                          title: const Text('Add Student'),
+                                          content: Text(
+                                            'Are you sure you want to add $firstName $lastName?',
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context, false),
+                                              child: const Text('Cancel'),
+                                            ),
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context, true),
+                                              child: const Text('Add'),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+
+                                    if (confirmed != true) return;
+
                                     await FirebaseFirestore.instance
                                         .collection('StudentOf')
                                         .add({
