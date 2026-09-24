@@ -49,6 +49,11 @@ class _ViewStudentsPageState extends State<ViewStudentsPage> {
         .where('role', isEqualTo: 'Student')
         .get();
 
+    final instructorsSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .where('role', isEqualTo: 'Instructor')
+        .get();
+
     final studentOfSnapshot =
         await FirebaseFirestore.instance.collection('StudentOf').get();
 
@@ -58,6 +63,7 @@ class _ViewStudentsPageState extends State<ViewStudentsPage> {
         .toSet();
 
     final availableStudents = <Map<String, dynamic>>[];
+    final availableInstructors = <Map<String, dynamic>>[];
 
     for (final studentDoc in studentsSnapshot.docs) {
       final data = studentDoc.data();
@@ -69,9 +75,64 @@ class _ViewStudentsPageState extends State<ViewStudentsPage> {
           ...data,
         });
       }
+      for (final instructorDoc in instructorsSnapshot.docs) {
+        final data = instructorDoc.data();
+        final instructorId = data['uid']?.toString() ?? instructorDoc.id;
+
+        if (!studentsWithInstructor.contains(instructorId)) {
+          availableInstructors.add({
+            'uid': instructorId,
+            ...data,
+          });
+        }
+      }
+    }
+    availableStudents.sort((a, b) {
+      final lastNameA = (a['lastName'] ?? '').toString().toLowerCase();
+      final lastNameB = (b['lastName'] ?? '').toString().toLowerCase();
+
+      final lastNameComparison = lastNameA.compareTo(lastNameB);
+
+      if (lastNameComparison != 0) {
+        return lastNameComparison;
+      }
+
+      final firstNameA = (a['firstName'] ?? '').toString().toLowerCase();
+      final firstNameB = (b['firstName'] ?? '').toString().toLowerCase();
+
+      return firstNameA.compareTo(firstNameB);
+    });
+    availableInstructors.sort((a, b) {
+      final lastNameA = (a['lastName'] ?? '').toString().toLowerCase();
+      final lastNameB = (b['lastName'] ?? '').toString().toLowerCase();
+
+      final lastNameComparison = lastNameA.compareTo(lastNameB);
+
+      if (lastNameComparison != 0) {
+        return lastNameComparison;
+      }
+
+      final firstNameA = (a['firstName'] ?? '').toString().toLowerCase();
+      final firstNameB = (b['firstName'] ?? '').toString().toLowerCase();
+
+      return firstNameA.compareTo(firstNameB);
+    });
+    final allAvailableUsers = [
+      ...availableStudents,
+      ...availableInstructors,
+    ];
+
+    final uniqueUsers = <String, Map<String, dynamic>>{};
+
+    for (final user in allAvailableUsers) {
+      final uid = user['uid']?.toString();
+
+      if (uid != null && uid.isNotEmpty) {
+        uniqueUsers[uid] = user;
+      }
     }
 
-    return availableStudents;
+return uniqueUsers.values.toList();
   }
   @override
   Widget build(BuildContext context) {
