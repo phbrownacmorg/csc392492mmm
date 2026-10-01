@@ -21,6 +21,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String problems = '[Not Logged In]';
   String assignedSheets = '[Not Logged In]';
   String completedSheets = '[Not Logged In]';
+  List<Map<String, dynamic>> pendingConnections = [];
   bool _isEnabled = false;
 
   Future<void> _submitSignOut() async {
@@ -54,27 +55,65 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _loadProfile() async {
     final data = await AuthService().getUserData();
     final currentUser = FirebaseAuth.instance.currentUser;
-
-    final studentOfSnapshot = await FirebaseFirestore.instance
-        .collection('StudentOf')
-        .where('studentId', isEqualTo: currentUser?.uid)
-        .get();
-    final instructorNames = <String>[];
-
-    for (final relation in studentOfSnapshot.docs) {
-      final instructorId = relation.data()['instructorId'];
-
-      final instructorDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(instructorId)
+    
+    if (currentUser != null) {
+      final connectionsSnapshot = await FirebaseFirestore.instance
+          .collection('Connections')
+          .where('studentId', isEqualTo: currentUser.uid)
           .get();
 
-      if (instructorDoc.exists) {
-        final instructorData = instructorDoc.data();
-        final firstName = instructorData?['firstName'] ?? '';
-        final lastName = instructorData?['lastName'] ?? '';
+      pendingConnections = [];
 
-        instructorNames.add('$firstName $lastName'.trim());
+      for (final connectionDoc in connectionsSnapshot.docs) {
+        final connectionData = connectionDoc.data();
+
+        if (connectionData['accepted'] == null) {
+          final instructorId = connectionData['instructorId'];
+
+          final instructorDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(instructorId)
+              .get();
+
+          final instructorData = instructorDoc.data();
+          final instructorFirstName = instructorData?['firstName'] ?? '';
+          final instructorLastName = instructorData?['lastName'] ?? '';
+
+          pendingConnections.add({
+            'id': connectionDoc.id,
+            ...connectionData,
+            'instructorName':
+                '$instructorFirstName $instructorLastName'.trim(),
+          });
+        }
+      }
+    }      
+
+    final acceptedConnectionsSnapshot = await FirebaseFirestore.instance
+        .collection('Connections')
+        .where('studentId', isEqualTo: currentUser?.uid)
+        .get();
+
+    final instructorNames = <String>[];
+
+    for (final connection in acceptedConnectionsSnapshot.docs) {
+      final connectionData = connection.data();
+
+      if (connectionData['accepted'] != null) {
+        final instructorId = connectionData['instructorId'];
+
+        final instructorDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(instructorId)
+            .get();
+
+        if (instructorDoc.exists) {
+          final instructorData = instructorDoc.data();
+          final firstName = instructorData?['firstName'] ?? '';
+          final lastName = instructorData?['lastName'] ?? '';
+
+          instructorNames.add('$firstName $lastName'.trim());
+        }
       }
     }
 
@@ -97,6 +136,38 @@ class _ProfilePageState extends State<ProfilePage> {
     } else {
       print('Unable to access profile data');
     }
+  }
+
+  Future<void> _acceptConnection(Map<String, dynamic> connection) async {
+    final connectionId = connection['id'];
+
+    await FirebaseFirestore.instance
+        .collection('Connections')
+        .doc(connectionId)
+        .update({
+      'accepted': FieldValue.serverTimestamp(),
+    });
+
+    await _loadProfile();
+
+    if (!mounted) return;
+
+    snackBarMessage('Instructor invitation accepted.');
+  }
+
+  Future<void> _rejectConnection(Map<String, dynamic> connection) async {
+    final connectionId = connection['id'];
+
+    await FirebaseFirestore.instance
+        .collection('Connections')
+        .doc(connectionId)
+        .delete();
+
+    await _loadProfile();
+
+    if (!mounted) return;
+
+    snackBarMessage('Instructor invitation rejected.');
   }
 
   void popPage() {
@@ -173,6 +244,42 @@ class _ProfilePageState extends State<ProfilePage> {
               style: const TextStyle(fontSize: 20),
             ),
             SizedBox(height: 10),
+
+            if (pendingConnections.isNotEmpty) ...[
+              const Text(
+                'Pending Instructor Invitations:',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              ...pendingConnections.map(
+                (connection) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${connection['instructorName']} has invited you to join their studio.',
+                      style: const TextStyle(fontSize: 18),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () => _acceptConnection(connection),
+                      child: const Text('Accept'),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () => _rejectConnection(connection),
+                      child: const Text('Reject'),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 10),
+            ],
+            
             Text(
               'Problems: $problems',
               style: const TextStyle(fontSize: 20),

@@ -37,7 +37,12 @@ final List<Collection> _collections = [
   Collection('Strategies', ['strategy_name'], null),
   Collection('users', ['username', 'email'], null),
   Collection('music_sheets', ['title', 'sheet_id'], null),
-  Collection('StudentOf', ['studentId', 'instructorId'], null)
+  Collection('StudentOf', ['studentId', 'instructorId'], null),
+  Collection(
+    'Connections',
+    ['studentId', 'instructorId', 'connectionType', 'accepted'],
+    null,
+  )
 ];
 
   @override

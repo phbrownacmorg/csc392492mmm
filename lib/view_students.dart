@@ -199,10 +199,12 @@ return uniqueUsers.values.toList();
                                     if (confirmed != true) return;
 
                                     await FirebaseFirestore.instance
-                                        .collection('StudentOf')
+                                        .collection('Connections')
                                         .add({
                                       'studentId': student['uid'],
                                       'instructorId': currentUser.uid,
+                                      'connectionType': 'instructor-student',
+                                      'accepted': null,
                                     });
 
                                     if (!context.mounted) return;
