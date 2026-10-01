@@ -18,31 +18,36 @@ class _ViewStudentsPageState extends State<ViewStudentsPage> {
       return [];
     }
 
-    final studentOfSnapshot = await FirebaseFirestore.instance
-        .collection('StudentOf')
+    final connectionsSnapshot = await FirebaseFirestore.instance
+        .collection('Connections')
         .where('instructorId', isEqualTo: currentUser.uid)
         .get();
 
     final students = <Map<String, dynamic>>[];
 
-    for (final relation in studentOfSnapshot.docs) {
-      final studentId = relation.data()['studentId'];
+    for (final connection in connectionsSnapshot.docs) {
+      final connectionData = connection.data();
 
-      final studentDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(studentId)
-          .get();
+      if (connectionData['accepted'] != null) {
+        final studentId = connectionData['studentId'];
 
-      if (studentDoc.exists) {
-        students.add({
-          'uid': studentId,
-          ...studentDoc.data()!,
-        });
+        final studentDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(studentId)
+            .get();
+
+        if (studentDoc.exists) {
+          students.add({
+            'uid': studentId,
+            ...studentDoc.data()!,
+          });
+        }
       }
     }
 
     return students;
   }
+
   Future<List<Map<String, dynamic>>> _loadAvailableStudents() async {
     final studentsSnapshot = await FirebaseFirestore.instance
         .collection('users')
@@ -54,10 +59,15 @@ class _ViewStudentsPageState extends State<ViewStudentsPage> {
         .where('role', isEqualTo: 'Instructor')
         .get();
 
-    final studentOfSnapshot =
-        await FirebaseFirestore.instance.collection('StudentOf').get();
+    
+    final currentUser = FirebaseAuth.instance.currentUser;
 
-    final studentsWithInstructor = studentOfSnapshot.docs
+    final connectionsSnapshot = await FirebaseFirestore.instance
+        .collection('Connections')
+        .where('instructorId', isEqualTo: currentUser?.uid)
+        .get();
+
+    final studentsWithInstructor = connectionsSnapshot.docs
         .map((doc) => doc.data()['studentId']?.toString())
         .whereType<String>()
         .toSet();
