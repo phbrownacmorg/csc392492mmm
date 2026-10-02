@@ -27,7 +27,7 @@ class InstructStudentPage extends StatelessWidget {
     });
 
     final snapshot = await FirebaseFirestore.instance
-        .collection('StudentOf')
+        .collection('Connections')
         .where('studentId', isEqualTo: studentId)
         .where('instructorId', isEqualTo: currentUser.uid)
         .get();
