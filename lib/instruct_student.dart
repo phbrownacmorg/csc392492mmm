@@ -19,13 +19,6 @@ class InstructStudentPage extends StatelessWidget {
 
     if (currentUser == null) return;
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(studentId)
-        .update({
-      'assignedSheets': [],
-    });
-
     final snapshot = await FirebaseFirestore.instance
         .collection('Connections')
         .where('studentId', isEqualTo: studentId)
