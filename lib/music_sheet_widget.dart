@@ -640,6 +640,10 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
             .doc(widget.documentId)
             .update(data);
       } else {
+        data['backlink'] = null;
+        data['restrictWrite'] = null;
+        data['Assigned'] = null;
+
         final newSheet = await FirebaseFirestore.instance
             .collection('music_sheets')
             .add(data);
