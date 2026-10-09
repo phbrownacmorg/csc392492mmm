@@ -105,11 +105,39 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
           .collection('music_sheets')
           .where('userId', isEqualTo: widget.studentId)
           .where('backlink', isEqualTo: sheetId)
-          .where('Assigned', isEqualTo: currentUser.uid)
-          .limit(1)
+          .where('creatorEmail', isEqualTo: currentUser.email)
           .get();
 
       if (existingAssignment.docs.isNotEmpty) {
+        final activeCopies = existingAssignment.docs.where(
+          (doc) => doc.data()['Assigned'] != null,
+        );
+
+        if (activeCopies.isNotEmpty) {
+          return;
+        }
+
+        final previousCopy = existingAssignment.docs.first;
+
+        await previousCopy.reference.update({
+          'Assigned': currentUser.uid,
+        });
+
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(widget.studentId)
+            .update({
+          'assignedSheets': FieldValue.arrayUnion([previousCopy.id]),
+        });
+
+        await _loadAssignedSheets();
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sheet reassigned successfully')),
+        );
+
         return;
       }
 
@@ -642,7 +670,11 @@ const SizedBox(height: 12),
                       if (_showAssignedSheets) {
                         return isAssigned;
                       } else {
-                        return !isAssigned && !hasAssignedClone;
+                        final isStudentCopy =
+                            doc.data()['userId'] == widget.studentId &&
+                            doc.data()['backlink'] != null;
+
+                        return !isAssigned && !hasAssignedClone && !isStudentCopy;
                       }
                     }
 
