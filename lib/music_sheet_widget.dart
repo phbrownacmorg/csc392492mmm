@@ -24,13 +24,14 @@ class MusicSheetWidget extends StatefulWidget {
   
 class _MusicSheetWidgetState extends State<MusicSheetWidget> {
   bool get isRestrictedAssignment {
-      final currentUser = FirebaseAuth.instance.currentUser;
+    final currentUser = FirebaseAuth.instance.currentUser;
 
-      return widget.isEditing &&
-          currentUser != null &&
-          widget.initialData?['userId'] == currentUser.uid &&
-          widget.initialData?['backlink'] != null;
-    }
+    return widget.isEditing &&
+        currentUser != null &&
+        widget.initialData?['userId'] == currentUser.uid &&
+        widget.initialData?['backlink'] != null &&
+        widget.initialData?['restrictWrite'] == true;
+  }
 
   late List<PlutoColumn> columns;
   late List<PlutoRow> rows;

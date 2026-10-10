@@ -92,6 +92,32 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
         return;
       }
 
+      final bool? restrictWrite = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Assignment Permissions'),
+          content: const Text(
+            'Should the student have limited or full editing permissions?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Full Editing'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Limited Editing'),
+            ),
+          ],
+        ),
+      );
+
+      if (restrictWrite == null) return;
+
       final originalSheet = await FirebaseFirestore.instance
           .collection('music_sheets')
           .doc(sheetId)
@@ -121,6 +147,7 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
 
         await previousCopy.reference.update({
           'Assigned': currentUser.uid,
+          'restrictWrite': restrictWrite,
         });
 
         await FirebaseFirestore.instance
@@ -153,7 +180,7 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
         'createdAt': FieldValue.serverTimestamp(),
         'creationDate': FieldValue.serverTimestamp(),
         'Assigned': currentUser.uid,
-        'restrictWrite': null,
+        'restrictWrite': restrictWrite,
       });
 
       await FirebaseFirestore.instance
@@ -431,7 +458,7 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
 
     final canRenameOrDelete =
         isOwner &&
-        data['backlink'] == null;
+        data['Assigned'] == null;
         
     final isAssignedCopy =
         data['userId'] == widget.studentId &&
