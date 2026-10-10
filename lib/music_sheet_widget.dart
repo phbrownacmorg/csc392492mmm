@@ -23,6 +23,15 @@ class MusicSheetWidget extends StatefulWidget {
 }
   
 class _MusicSheetWidgetState extends State<MusicSheetWidget> {
+  bool get isRestrictedAssignment {
+      final currentUser = FirebaseAuth.instance.currentUser;
+
+      return widget.isEditing &&
+          currentUser != null &&
+          widget.initialData?['userId'] == currentUser.uid &&
+          widget.initialData?['backlink'] != null;
+    }
+
   late List<PlutoColumn> columns;
   late List<PlutoRow> rows;
   PlutoGridStateManager? stateManager;
@@ -34,15 +43,13 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
   final Map<PlutoRow, String> selectedVideoNamesByRow = {};
 
   final TextEditingController notesController = TextEditingController();
+  final TextEditingController studentNotesController = TextEditingController();
   final TextEditingController worksheetNameController = TextEditingController();
 
   List<String> strategies = [];
   List<String> pieces = [];
   //avoid duplicating code for the practice log
-  bool _readOnlyHelperFunction(PlutoRow row, PlutoCell cell) {
-      final piece = row.cells['strategy']?.value?.toString().trim() ?? '';
-      return piece.isEmpty;
-  }
+
   String _problemsLabel(dynamic value) {
     if (value is! List || value.isEmpty) {
       return 'Select';
@@ -67,6 +74,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         field: 'piece',
         type: PlutoColumnType.select(pieces),
         enableSorting: false,
+        readOnly: isRestrictedAssignment,
       ),
       PlutoColumn(
         title: 'Tempo',
@@ -75,7 +83,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         enableSorting: false,
         checkReadOnly: (row, cell) {
           final piece = row.cells['piece']?.value?.toString().trim() ?? '';
-          return piece.isEmpty;
+          return isRestrictedAssignment || piece.isEmpty;
         },
       ),
       PlutoColumn(
@@ -85,7 +93,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         enableSorting: false,
         checkReadOnly: (row, cell) {
           final piece = row.cells['piece']?.value?.toString().trim() ?? '';
-          return piece.isEmpty;
+          return isRestrictedAssignment || piece.isEmpty;
         },
       ),
       PlutoColumn(
@@ -126,7 +134,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
           final problemsLabel = _problemsLabel(currentValue);
 
           return InkWell(
-            onTap: () async {
+            onTap: isRestrictedAssignment ? null : () async {
               final updatedProblems = List<String>.from(selectedProblems);
 
               await showDialog(
@@ -258,7 +266,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         enableSorting: false,
         checkReadOnly: (row, cell) {
           final passage = row.cells['passage']?.value?.toString().trim() ?? '';
-          return passage.isEmpty;
+          return isRestrictedAssignment || passage.isEmpty;
         },
       ),
       PlutoColumn(
@@ -267,7 +275,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.number(),
         width: 50,
         enableSorting: false,
-        checkReadOnly: _readOnlyHelperFunction,
+        checkReadOnly: (row, cell) => false,
       ),
       PlutoColumn(
         title: 'T',
@@ -275,7 +283,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.number(),
         width: 50,
         enableSorting: false,
-        checkReadOnly: _readOnlyHelperFunction,
+        checkReadOnly: (row, cell) => false,
       ),
       PlutoColumn(
         title: 'W',
@@ -283,7 +291,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.number(),
         width: 50,
         enableSorting: false,
-        checkReadOnly: _readOnlyHelperFunction,
+        checkReadOnly: (row, cell) => false,
       ),
       PlutoColumn(
         title: 'Th',
@@ -291,7 +299,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.number(),
         width: 60,
         enableSorting: false,
-        checkReadOnly: _readOnlyHelperFunction,
+        checkReadOnly: (row, cell) => false,
       ),
       PlutoColumn(
         title: 'F',
@@ -299,7 +307,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.number(),
         width: 50,
         enableSorting: false,
-        checkReadOnly: _readOnlyHelperFunction,
+        checkReadOnly: (row, cell) => false,
       ),
       PlutoColumn(
         title: 'Sat',
@@ -307,7 +315,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.number(),
         width: 70,
         enableSorting: false,
-        checkReadOnly: _readOnlyHelperFunction,
+        checkReadOnly: (row, cell) => false,
       ),
       PlutoColumn(
         title: 'Sun',
@@ -315,7 +323,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.number(),
         width: 70,
         enableSorting: false,
-        checkReadOnly: _readOnlyHelperFunction,
+        checkReadOnly: (row, cell) => false,
       ),
       PlutoColumn(
         title: 'Video',
@@ -331,7 +339,9 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         type: PlutoColumnType.select(['Mastered', 'Not Mastered']),
         width: 120,
         enableSorting: false,
-        checkReadOnly: _readOnlyHelperFunction,
+        checkReadOnly: (row, cell) {
+          return false;
+        },
       ),
     ];
 
@@ -341,6 +351,9 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
 
       notesController.text =
         widget.initialData!['notes']?.toString() ?? '';
+
+      studentNotesController.text =
+        widget.initialData?['studentNotes']?.toString() ?? '';
 
       final existingRows = widget.initialData!['rows'];
 
@@ -581,6 +594,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
       'sheetName': _getWorksheetName(),
       'rows': rowData,
       'notes': notesController.text.trim(),
+      'studentNotes': studentNotesController.text,
       'createdAt': FieldValue.serverTimestamp(),
     };
   }
@@ -627,13 +641,62 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
 
       final currentUser = FirebaseAuth.instance.currentUser;
 
-      if (currentUser != null) {
+      if (currentUser != null && !widget.isEditing) {
         data['userId'] = currentUser.uid;
         data['creatorEmail'] = currentUser.email;
       }
 
       if (widget.isEditing) {
         data.remove('createdAt');
+
+        if (isRestrictedAssignment) {
+          data.remove('sheetName');
+          data.remove('notes');
+
+          final originalRows = widget.initialData?['rows'];
+
+          if (originalRows is List) {
+            final updatedRows = data['rows'];
+
+            if (updatedRows is List) {
+              final protectedRows = <Map<String, dynamic>>[];
+
+              for (int i = 0; i < originalRows.length; i++) {
+                final original = originalRows[i];
+
+                if (original is! Map) continue;
+
+                final updated =
+                    i < updatedRows.length && updatedRows[i] is Map
+                        ? updatedRows[i] as Map
+                        : <String, dynamic>{};
+
+                final protectedRow = Map<String, dynamic>.from(original);
+
+                for (final field in [
+                  'mon',
+                  'tue',
+                  'wed',
+                  'thu',
+                  'fri',
+                  'sat',
+                  'sun',
+                  'mastery',
+                  'videoName',
+                  'videoUrl',
+                ]) {
+                  if (updated.containsKey(field)) {
+                    protectedRow[field] = updated[field];
+                  }
+                }
+
+                protectedRows.add(protectedRow);
+              }
+
+              data['rows'] = protectedRows;
+            }
+          }
+        }
 
         await FirebaseFirestore.instance
             .collection('music_sheets')
@@ -683,6 +746,7 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
           children: [
             TextField(
               controller: worksheetNameController,
+              readOnly: isRestrictedAssignment,
               decoration: const InputDecoration(
                 labelText: 'Worksheet Name',
                 hintText: 'Name your worksheet',
@@ -716,19 +780,32 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
             const SizedBox(height: 20),
             TextField(
               controller: notesController,
-              decoration: const InputDecoration(
-                labelText: 'Notes',
+              readOnly: isRestrictedAssignment,
+              decoration: InputDecoration(
+                labelText: isRestrictedAssignment ? 'Instructor Notes' : 'Notes',
                 hintText: 'Enter your notes here...',
                 border: OutlineInputBorder(),
               ),
               maxLines: 5,
             ),
+            if (isRestrictedAssignment) ...[
+              const SizedBox(height: 12),
+              TextField(
+                controller: studentNotesController,
+                decoration: const InputDecoration(
+                  labelText: 'Student Notes',
+                  hintText: 'Enter student notes here...',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 5,
+              ),
+            ],
             const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton.icon(
-                  onPressed: _addNewRow,
+                  onPressed: isRestrictedAssignment ? null : _addNewRow,
                   icon: const Icon(Icons.add),
                   label: const Text('Add New Row'),
                   style: ElevatedButton.styleFrom(

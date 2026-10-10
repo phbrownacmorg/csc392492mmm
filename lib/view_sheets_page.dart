@@ -423,6 +423,16 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
     String documentId,
     Map<String, dynamic> data,
   ) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+
+    final isOwner =
+        currentUser != null &&
+        data['userId'] == currentUser.uid;
+
+    final canRenameOrDelete =
+        isOwner &&
+        data['backlink'] == null;
+        
     final isAssignedCopy =
         data['userId'] == widget.studentId &&
         data['Assigned'] == FirebaseAuth.instance.currentUser?.uid &&
@@ -518,12 +528,16 @@ const SizedBox(height: 12),
               ),      
 
               TextButton.icon(
-                onPressed: () => _renameSheet(documentId, sheetName),
+                onPressed: canRenameOrDelete
+                    ? () => _renameSheet(documentId, sheetName)
+                    : null,
                 icon: const Icon(Icons.drive_file_rename_outline),
                 label: const Text('Rename'),
               ),
               TextButton.icon(
-                onPressed: () => _confirmDelete(documentId),
+                onPressed: canRenameOrDelete
+                    ? () => _confirmDelete(documentId)
+                    : null,
                 icon: const Icon(Icons.delete, color: Colors.red),
                 label: const Text('Delete'),
               ),
@@ -684,7 +698,12 @@ const SizedBox(height: 12),
                         return true;
                       }
 
-                      return _assignedSheetIds.contains(doc.id);
+                      final isOwned = doc.data()['userId'] ==
+                          FirebaseAuth.instance.currentUser?.uid;
+
+                      final isAssigned = _assignedSheetIds.contains(doc.id);
+
+                      return isOwned || isAssigned;
                     }
 
                     // Instructor viewing View Sheets normally.
