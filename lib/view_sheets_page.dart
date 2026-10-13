@@ -249,14 +249,22 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
     Query<Map<String, dynamic>> query =
         FirebaseFirestore.instance.collection('music_sheets');
 
-    if (currentUser != null &&
-        !_showAllSheets &&
-        !widget.studentView &&
-        widget.studentId == null) {
-      query = query.where('userId', isEqualTo: currentUser.uid);
+    if (currentUser == null) {
+      return query
+          .where('userId', isEqualTo: '__no_user__')
+          .snapshots();
     }
 
-    return query.orderBy('createdAt', descending: true).snapshots();
+    if (widget.studentId == null) {
+      query = query.where(
+        Filter.or(
+          Filter('userId', isEqualTo: currentUser.uid),
+          Filter('Assigned', isEqualTo: currentUser.uid),
+        ),
+      );
+    }
+
+    return query.snapshots();
   }
 
   bool _sheetMatchesSearch(Map<String, dynamic> data) {
@@ -634,23 +642,6 @@ const SizedBox(height: 12),
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            if (currentUser != null)
-              SwitchListTile(
-                title: const Text('Show all sheets'),
-                subtitle: const Text(
-                  'Off = only sheets saved by the current user',
-                ),
-                value: _showAllSheets,
-                onChanged: (value) {
-                  setState(() {
-                    _showAllSheets = value;
-                  });
-                },
-              )
-            else
-              const Text(
-                'No user is logged in, so all sheets are shown.',
-              ),
             if (widget.studentId != null)
               SwitchListTile(
                 title: const Text('Show assigned sheets'),
@@ -734,8 +725,10 @@ const SizedBox(height: 12),
                     }
 
                     // Instructor viewing View Sheets normally.
-                    return true;
-                  }).toList();
+                    return currentUser != null &&
+                        (doc.data()['userId'] == currentUser.uid ||
+                            doc.data()['Assigned'] == currentUser.uid);
+                    }).toList();
 
                   if (filteredDocs.isEmpty) {
                     return const Center(

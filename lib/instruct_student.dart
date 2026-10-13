@@ -14,27 +14,49 @@ class InstructStudentPage extends StatelessWidget {
     required this.studentName,
   });
 
-  Future<void> _removeStudent(BuildContext context) async {
-    final currentUser = FirebaseAuth.instance.currentUser;
+Future<void> _removeStudent(BuildContext context) async {
+  final currentUser = FirebaseAuth.instance.currentUser;
 
-    if (currentUser == null) return;
+  if (currentUser == null) return;
 
-    final snapshot = await FirebaseFirestore.instance
-        .collection('Connections')
-        .where('studentId', isEqualTo: studentId)
-        .where('instructorId', isEqualTo: currentUser.uid)
-        .get();
+  final firestore = FirebaseFirestore.instance;
 
-    for (final doc in snapshot.docs) {
-      await doc.reference.delete();
-    }
+  // Find sheets assigned by this instructor to this student.
+  final assignedSheets = await firestore
+      .collection('music_sheets')
+      .where('userId', isEqualTo: studentId)
+      .where('Assigned', isEqualTo: currentUser.uid)
+      .get();
 
-    if (!context.mounted) return;
+  // Remove assignment restrictions, but keep the student's copies.
+  for (final sheet in assignedSheets.docs) {
+    await sheet.reference.update({
+      'Assigned': null,
+      'restrictWrite': null,
+    });
 
-    Navigator.pop(context);
+    await firestore.collection('users').doc(studentId).update({
+      'assignedSheets': FieldValue.arrayRemove([sheet.id]),
+    });
   }
 
-  @override
+  // Remove only this instructor's connection with the student.
+  final connections = await firestore
+      .collection('Connections')
+      .where('studentId', isEqualTo: studentId)
+      .where('instructorId', isEqualTo: currentUser.uid)
+      .get();
+
+  for (final connection in connections.docs) {
+    await connection.reference.delete();
+  }
+
+  if (!context.mounted) return;
+
+  Navigator.pop(context);
+}
+
+@override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
