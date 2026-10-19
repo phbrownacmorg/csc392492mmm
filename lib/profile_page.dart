@@ -22,6 +22,10 @@ class _ProfilePageState extends State<ProfilePage> {
   String assignedSheets = '[Not Logged In]';
   String completedSheets = '[Not Logged In]';
   List<Map<String, dynamic>> pendingConnections = [];
+  List<Map<String, dynamic>> pendingPeerConnections = [];
+  List<Map<String, dynamic>> acceptedPeerConnections = [];
+  final TextEditingController _peerEmailController = TextEditingController();
+  bool _isSendingPeerRequest = false;
   bool _isEnabled = false;
 
   Future<void> _submitSignOut() async {
@@ -52,6 +56,12 @@ class _ProfilePageState extends State<ProfilePage> {
     _loadProfile();
   }
 
+  @override
+  void dispose() {
+    _peerEmailController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadProfile() async {
     final data = await AuthService().getUserData();
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -61,6 +71,73 @@ class _ProfilePageState extends State<ProfilePage> {
           .collection('Connections')
           .where('studentId', isEqualTo: currentUser.uid)
           .get();
+
+            final peerConnectionsSnapshot = await FirebaseFirestore.instance
+          .collection('Connections')
+          .where('receiverId', isEqualTo: currentUser.uid)
+          .get();
+      final sentPeerSnapshot = await FirebaseFirestore.instance
+          .collection('Connections')
+          .where('requesterId', isEqualTo: currentUser.uid)
+          .get();
+
+      acceptedPeerConnections = [];
+
+      final allPeerDocs = [
+        ...peerConnectionsSnapshot.docs,
+        ...sentPeerSnapshot.docs,
+      ];
+
+      for (final peerDoc in allPeerDocs) {
+        final peerData = peerDoc.data();
+
+        if (peerData['connectionType'] != 'peer' ||
+            peerData['accepted'] == null) {
+          continue;
+        }
+
+        final otherUserId = peerData['requesterId'] == currentUser.uid
+            ? peerData['receiverId']
+            : peerData['requesterId'];
+
+        final otherUserDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(otherUserId)
+            .get();
+
+        final otherUserData = otherUserDoc.data();
+
+        acceptedPeerConnections.add({
+          'id': peerDoc.id,
+          'peerName':
+              '${otherUserData?['firstName'] ?? ''} ${otherUserData?['lastName'] ?? ''}'
+                  .trim(),
+        });
+      }
+
+      pendingPeerConnections = [];
+
+      for (final peerDoc in peerConnectionsSnapshot.docs) {
+        final peerData = peerDoc.data();
+
+        if (peerData['connectionType'] == 'peer' &&
+            peerData['accepted'] == null) {
+          final requesterDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(peerData['requesterId'])
+              .get();
+
+          final requesterData = requesterDoc.data();
+          final peerFirstName = requesterData?['firstName'] ?? '';
+          final peerLastName = requesterData?['lastName'] ?? '';
+
+          pendingPeerConnections.add({
+            'id': peerDoc.id,
+            ...peerData,
+            'peerName': '$peerFirstName $peerLastName'.trim(),
+          });
+        }
+      }
 
       pendingConnections = [];
 
@@ -137,7 +214,79 @@ class _ProfilePageState extends State<ProfilePage> {
       print('Unable to access profile data');
     }
   }
+  Future<void> _requestPeerConnection() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null || _isSendingPeerRequest) return;
 
+    final email = _peerEmailController.text.trim().toLowerCase();
+
+    if (email.isEmpty) {
+      snackBarMessage('Please enter an email address.');
+      return;
+    }
+
+    if (email == currentUser.email?.toLowerCase()) {
+      snackBarMessage('You cannot connect with yourself.');
+      return;
+    }
+
+    setState(() {
+      _isSendingPeerRequest = true;
+    });
+
+    try {
+      final usersSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
+
+      if (usersSnapshot.docs.isEmpty) {
+        snackBarMessage(
+          'Email not found. Please check the address and try again.',
+        );
+        return;
+      }
+
+      final peerId = usersSnapshot.docs.first.id;
+
+      final existingConnections = await FirebaseFirestore.instance
+          .collection('Connections')
+          .where('connectionType', isEqualTo: 'peer')
+          .get();
+
+      final alreadyConnected = existingConnections.docs.any((doc) {
+        final data = doc.data();
+        return (data['requesterId'] == currentUser.uid &&
+                data['receiverId'] == peerId) ||
+            (data['requesterId'] == peerId &&
+                data['receiverId'] == currentUser.uid);
+      });
+
+      if (alreadyConnected) {
+        snackBarMessage('A peer connection already exists or is pending.');
+        return;
+      }
+
+      await FirebaseFirestore.instance.collection('Connections').add({
+        'connectionType': 'peer',
+        'requesterId': currentUser.uid,
+        'receiverId': peerId,
+        'accepted': null,
+      });
+
+      _peerEmailController.clear();
+      snackBarMessage('Peer connection request sent.');
+    } catch (e) {
+      snackBarMessage('Error sending request: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSendingPeerRequest = false;
+        });
+      }
+    }
+  }
   Future<void> _acceptConnection(Map<String, dynamic> connection) async {
     final connectionId = connection['id'];
 
@@ -169,7 +318,54 @@ class _ProfilePageState extends State<ProfilePage> {
 
     snackBarMessage('Instructor invitation rejected.');
   }
+  Future<void> _acceptPeerConnection(
+      Map<String, dynamic> connection) async {
+    final connectionId = connection['id'];
 
+    await FirebaseFirestore.instance
+        .collection('Connections')
+        .doc(connectionId)
+        .update({
+      'accepted': FieldValue.serverTimestamp(),
+    });
+
+    await _loadProfile();
+
+    if (!mounted) return;
+
+    snackBarMessage('Peer connection accepted.');
+  }
+
+  Future<void> _rejectPeerConnection(
+      Map<String, dynamic> connection) async {
+    final connectionId = connection['id'];
+
+    await FirebaseFirestore.instance
+        .collection('Connections')
+        .doc(connectionId)
+        .delete();
+
+    await _loadProfile();
+
+    if (!mounted) return;
+
+    snackBarMessage('Peer connection rejected.');
+  }
+  Future<void> _disconnectPeerConnection(
+      Map<String, dynamic> connection) async {
+    final connectionId = connection['id'];
+
+    await FirebaseFirestore.instance
+        .collection('Connections')
+        .doc(connectionId)
+        .delete();
+
+    await _loadProfile();
+
+    if (!mounted) return;
+
+    snackBarMessage('Peer connection removed.');
+  }
   void popPage() {
     Navigator.pop(context);
   }
@@ -216,9 +412,34 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
+        child: SingleChildScrollView(
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const Text(
+              'Request Peer Connection',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _peerEmailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Peer Email Address',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: _isSendingPeerRequest ? null : _requestPeerConnection,
+              child: Text(
+                _isSendingPeerRequest ? 'Sending...' : 'Request Connection',
+              ),
+            ),
+            const SizedBox(height: 20),
             Text(
               'Name: $firstName $lastName',
               style: const TextStyle(fontSize: 20),
@@ -279,7 +500,71 @@ class _ProfilePageState extends State<ProfilePage> {
 
               const SizedBox(height: 10),
             ],
-            
+            if (pendingPeerConnections.isNotEmpty) ...[
+              const Text(
+                'Pending Peer Invitations:',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              ...pendingPeerConnections.map(
+                (connection) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${connection['peerName']} wants to connect with you as a peer.',
+                      style: const TextStyle(fontSize: 18),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: () => _acceptPeerConnection(connection),
+                      child: const Text('Accept'),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () => _rejectPeerConnection(connection),
+                      child: const Text('Reject'),
+                    ),
+                  ],
+                ),
+              ),
+
+            ],
+            if (acceptedPeerConnections.isNotEmpty) ...[
+              const Text(
+                'My Peers:',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              ...acceptedPeerConnections.map(
+                (connection) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          connection['peerName'] ?? '',
+                          style: const TextStyle(fontSize: 18),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => _disconnectPeerConnection(connection),
+                        child: const Text('Disconnect'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+            ],
             Text(
               'Problems: $problems',
               style: const TextStyle(fontSize: 20),
@@ -310,8 +595,9 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
           ],
-        ),
-      )
-    );
+        ), // Column
+      ), // SingleChildScrollView
+    ), // Padding
+  ); // Scaffold
   }
 }

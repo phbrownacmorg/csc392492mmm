@@ -696,17 +696,15 @@ const SizedBox(height: 12),
 
                     if (widget.studentId != null) {
                       final isAssigned = _assignedSheetIds.contains(doc.id);
-                      final hasAssignedClone =
-                          _assignedClonesByOriginalId.containsKey(doc.id);
 
                       if (_showAssignedSheets) {
                         return isAssigned;
                       } else {
-                        final isStudentCopy =
-                            doc.data()['userId'] == widget.studentId &&
-                            doc.data()['backlink'] != null;
+                        final isInstructorOwned =
+                            currentUser != null &&
+                            doc.data()['userId'] == currentUser.uid;
 
-                        return !isAssigned && !hasAssignedClone && !isStudentCopy;
+                        return isAssigned || isInstructorOwned;
                       }
                     }
 
