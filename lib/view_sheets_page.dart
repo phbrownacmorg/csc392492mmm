@@ -648,7 +648,7 @@ const SizedBox(height: 12),
                 subtitle: Text(
                   _showAssignedSheets
                       ? 'Showing sheets assigned to this student'
-                      : 'Showing sheets not assigned to this student',
+                      : 'Showing assigned sheets and your own sheets',
                 ),
                 value: _showAssignedSheets,
                 onChanged: (value) {
