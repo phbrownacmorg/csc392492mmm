@@ -26,6 +26,8 @@ class _ProfilePageState extends State<ProfilePage> {
   List<Map<String, dynamic>> acceptedPeerConnections = [];
   final TextEditingController _peerEmailController = TextEditingController();
   bool _isSendingPeerRequest = false;
+  String? _peerEmailError;
+  String? _peerEmailSuccess;
   bool _isEnabled = false;
 
   Future<void> _submitSignOut() async {
@@ -232,6 +234,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
     setState(() {
       _isSendingPeerRequest = true;
+      _peerEmailError = null;
+      _peerEmailSuccess = null;
     });
 
     try {
@@ -242,9 +246,13 @@ class _ProfilePageState extends State<ProfilePage> {
           .get();
 
       if (usersSnapshot.docs.isEmpty) {
-        snackBarMessage(
-          'Email not found. Please check the address and try again.',
-        );
+        if (!mounted) return;
+
+        setState(() {
+          _peerEmailError =
+              'Email not found. Please check the address and try again.';
+        });
+
         return;
       }
 
@@ -255,16 +263,28 @@ class _ProfilePageState extends State<ProfilePage> {
           .where('connectionType', isEqualTo: 'peer')
           .get();
 
-      final alreadyConnected = existingConnections.docs.any((doc) {
+      for (final doc in existingConnections.docs) {
         final data = doc.data();
-        return (data['requesterId'] == currentUser.uid &&
+
+        final samePeople =
+            (data['requesterId'] == currentUser.uid &&
                 data['receiverId'] == peerId) ||
             (data['requesterId'] == peerId &&
                 data['receiverId'] == currentUser.uid);
-      });
 
-      if (alreadyConnected) {
-        snackBarMessage('A peer connection already exists or is pending.');
+        if (!samePeople) continue;
+
+        if (!mounted) return;
+
+        setState(() {
+          if (data['accepted'] != null) {
+            _peerEmailError = "You're already connected to $email.";
+          } else {
+            _peerEmailError =
+                "You have already requested a connection with $email.";
+          }
+        });
+
         return;
       }
 
@@ -276,7 +296,13 @@ class _ProfilePageState extends State<ProfilePage> {
       });
 
       _peerEmailController.clear();
-      snackBarMessage('Peer connection request sent.');
+
+      if (!mounted) return;
+
+      setState(() {
+        _peerEmailError = null;
+        _peerEmailSuccess = 'Peer connection request sent successfully!';
+      });
     } catch (e) {
       snackBarMessage('Error sending request: $e');
     } finally {
@@ -427,11 +453,22 @@ class _ProfilePageState extends State<ProfilePage> {
             TextField(
               controller: _peerEmailController,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Peer Email Address',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
+                errorText: _peerEmailError,
               ),
             ),
+            if (_peerEmailSuccess != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                _peerEmailSuccess!,
+                style: const TextStyle(
+                  color: Colors.green,
+                  fontSize: 13,
+                ),
+              ),
+            ],
             const SizedBox(height: 10),
             ElevatedButton(
               onPressed: _isSendingPeerRequest ? null : _requestPeerConnection,
@@ -548,12 +585,13 @@ class _ProfilePageState extends State<ProfilePage> {
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Row(
                     children: [
-                      Expanded(
+                      Flexible(
                         child: Text(
                           connection['peerName'] ?? '',
                           style: const TextStyle(fontSize: 18),
                         ),
                       ),
+                      const SizedBox(width: 12),
                       ElevatedButton(
                         onPressed: () => _disconnectPeerConnection(connection),
                         child: const Text('Disconnect'),
