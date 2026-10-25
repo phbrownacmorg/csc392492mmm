@@ -320,6 +320,23 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
   }
 
   Future<void> _deleteSheet(String documentId) async {
+    final sheetDoc = await FirebaseFirestore.instance
+        .collection('music_sheets')
+        .doc(documentId)
+        .get();
+
+    if (!sheetDoc.exists) return;
+
+    final ownerId = sheetDoc.data()?['userId'];
+
+    if (ownerId is String && ownerId.isNotEmpty) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(ownerId)
+          .update({
+        'assignedSheets': FieldValue.arrayRemove([documentId]),
+      });
+    }
     await FirebaseFirestore.instance
         .collection('music_sheets')
         .doc(documentId)
