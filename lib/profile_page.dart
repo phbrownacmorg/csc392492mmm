@@ -18,9 +18,6 @@ class _ProfilePageState extends State<ProfilePage> {
   String role = '[Not Logged In]';
   String phone = '[Not Logged In]';
   String myInstructors = '[Not Logged In]';
-  String problems = '[Not Logged In]';
-  String assignedSheets = '[Not Logged In]';
-  String completedSheets = '[Not Logged In]';
   List<Map<String, dynamic>> pendingConnections = [];
   List<Map<String, dynamic>> pendingPeerConnections = [];
   List<Map<String, dynamic>> acceptedPeerConnections = [];
@@ -208,9 +205,6 @@ class _ProfilePageState extends State<ProfilePage> {
         myInstructors = instructorNames.isNotEmpty
             ? instructorNames.join(', ')
             : '[No Instructors Set]';
-        problems = data['problems']?.join(', ') ?? '[No Problems Found]';
-        assignedSheets = data['assignedSheets']?.join(', ') ?? '[No Sheets Assigned]';
-        completedSheets = data['completedSheets']?.join(', ') ?? '[No Sheets Completed]';
       });
     } else {
       print('Unable to access profile data');
@@ -603,20 +597,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
               const SizedBox(height: 20),
             ],
-            Text(
-              'Problems: $problems',
-              style: const TextStyle(fontSize: 20),
-            ),
-            SizedBox(height: 10),
-            Text(
-              'Assigned Sheets: $assignedSheets',
-              style: const TextStyle(fontSize: 20),
-            ),
-            SizedBox(height: 10),
-            Text(
-              'Completed Sheets: $completedSheets',
-              style: const TextStyle(fontSize: 20),
-            ),
             // Soon: Add a way to display information on assigned sheets and completed sheets (hint: both fields are initialized as empty lists in auth_service.dart).
             SizedBox(height: 20),
             ElevatedButton(

@@ -62,15 +62,45 @@ class _ViewStudentsPageState extends State<ViewStudentsPage> {
     
     final currentUser = FirebaseAuth.instance.currentUser;
 
-    final connectionsSnapshot = await FirebaseFirestore.instance
-        .collection('Connections')
-        .where('instructorId', isEqualTo: currentUser?.uid)
-        .get();
+    if (currentUser == null) return [];
 
-    final studentsWithInstructor = connectionsSnapshot.docs
-        .map((doc) => doc.data()['studentId']?.toString())
-        .whereType<String>()
-        .toSet();
+    final connectionsSnapshot = await FirebaseFirestore.instance
+      .collection('Connections')
+      .get();
+
+    final studentsWithInstructor = <String>{};
+
+    for (final connection in connectionsSnapshot.docs) {
+      final data = connection.data();
+
+      if (data['instructorId'] == currentUser.uid) {
+        final studentId = data['studentId']?.toString();
+        if (studentId != null) {
+          studentsWithInstructor.add(studentId);
+        }
+      }
+
+      if (data['requesterId'] == currentUser.uid) {
+        final receiverId = data['receiverId']?.toString();
+        if (receiverId != null) {
+          studentsWithInstructor.add(receiverId);
+        }
+      }
+
+      if (data['receiverId'] == currentUser.uid) {
+        final requesterId = data['requesterId']?.toString();
+        if (requesterId != null) {
+          studentsWithInstructor.add(requesterId);
+        }
+      }
+
+      if (data['studentId'] == currentUser.uid) {
+        final instructorId = data['instructorId']?.toString();
+        if (instructorId != null) {
+          studentsWithInstructor.add(instructorId);
+        }
+      }
+    }
 
     final availableStudents = <Map<String, dynamic>>[];
     final availableInstructors = <Map<String, dynamic>>[];
@@ -89,7 +119,8 @@ class _ViewStudentsPageState extends State<ViewStudentsPage> {
         final data = instructorDoc.data();
         final instructorId = data['uid']?.toString() ?? instructorDoc.id;
 
-        if (!studentsWithInstructor.contains(instructorId)) {
+        if (instructorId != currentUser.uid &&
+           !studentsWithInstructor.contains(instructorId)) {
           availableInstructors.add({
             'uid': instructorId,
             ...data,
