@@ -609,8 +609,11 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
         return;
       }
 
+      FocusManager.instance.primaryFocus?.unfocus();
+
+      await Future.delayed(const Duration(milliseconds: 150));
+
       stateManager!.setEditing(false);
-      stateManager!.clearCurrentCell();
 
       final gridRows = stateManager!.rows;
 

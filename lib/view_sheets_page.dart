@@ -26,11 +26,81 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
   bool _showAssignedSheets = true;
   List<String> _assignedSheetIds = [];
   Map<String, String> _assignedClonesByOriginalId = {};
+  List<Map<String, String>> _acceptedPeers = [];
 
   @override
   void initState() {
     super.initState();
     _loadAssignedSheets();
+    _loadAcceptedPeers();
+  }
+
+  Future<void> _loadAcceptedPeers() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    try {
+      final sentSnapshot = await FirebaseFirestore.instance
+          .collection('Connections')
+          .where('requesterId', isEqualTo: currentUser.uid)
+          .get();
+
+      final receivedSnapshot = await FirebaseFirestore.instance
+          .collection('Connections')
+          .where('receiverId', isEqualTo: currentUser.uid)
+          .get();
+
+      final peers = <String, String>{};
+
+      for (final connection in [
+        ...sentSnapshot.docs,
+        ...receivedSnapshot.docs,
+      ]) {
+        final data = connection.data();
+
+        if (data['connectionType'] != 'peer' ||
+            data['accepted'] == null) {
+          continue;
+        }
+
+        final peerId = data['requesterId'] == currentUser.uid
+            ? data['receiverId']
+            : data['requesterId'];
+
+        if (peerId is! String ||
+            peerId.isEmpty ||
+            peerId == currentUser.uid) {
+          continue;
+        }
+
+        final peerDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(peerId)
+            .get();
+
+        if (!peerDoc.exists) continue;
+
+        final peerData = peerDoc.data();
+        final peerName =
+            '${peerData?['firstName'] ?? ''} ${peerData?['lastName'] ?? ''}'
+                .trim();
+
+        peers[peerId] = peerName.isEmpty ? 'Unknown Peer' : peerName;
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _acceptedPeers = peers.entries
+            .map((entry) => {
+                  'id': entry.key,
+                  'name': entry.value,
+                })
+            .toList();
+      });
+    } catch (e) {
+      debugPrint('Error loading accepted peers: $e');
+    }
   }
   
   @override
@@ -374,7 +444,79 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
       await _deleteSheet(documentId);
     }
   }
+  Future<void> _pushSheetToPeer(
+    String sheetId,
+    String peerId,
+  ) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
 
+    if (currentUser == null || peerId == currentUser.uid) {
+      return;
+    }
+
+    try {
+      final originalSheet = await FirebaseFirestore.instance
+          .collection('music_sheets')
+          .doc(sheetId)
+          .get();
+
+      if (!originalSheet.exists) return;
+
+      final originalData = originalSheet.data()!;
+
+      if (originalData['userId'] != currentUser.uid) {
+        return;
+      }
+
+      final existingCopies = await FirebaseFirestore.instance
+          .collection('music_sheets')
+          .where('userId', isEqualTo: peerId)
+          .where('backlink', isEqualTo: sheetId)
+          .get();
+
+      if (existingCopies.docs.isNotEmpty) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('This sheet has already been sent to this peer'),
+          ),
+        );
+        return;
+      }
+
+      await FirebaseFirestore.instance
+          .collection('music_sheets')
+          .add({
+        ...originalData,
+        'userId': peerId,
+        'backlink': sheetId,
+        'creatorEmail': currentUser.email,
+        'createdAt': FieldValue.serverTimestamp(),
+        'creationDate': FieldValue.serverTimestamp(),
+        'Assigned': null,
+        'restrictWrite': false,
+      });
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Sheet pushed to peer successfully'),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error pushing sheet to peer: $e');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not push sheet to peer'),
+        ),
+      );
+    }
+  }
   Future<void> _renameSheet(
     String documentId,
     String currentSheetName,
@@ -556,10 +698,49 @@ const SizedBox(height: 12),
                         : 'Assign',
                   ),
                 ),
-
               TextButton.icon(
-                onPressed: () {
-                  Navigator.push(
+                onPressed: isOwner
+                ? () {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: const Text('Push Sheet to Peer'),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (_acceptedPeers.isEmpty)
+                                const ListTile(
+                                  title: Text('No accepted peers found'),
+                                ),
+                              ..._acceptedPeers.map((peer) {
+                                return ListTile(
+                                  leading: const Icon(Icons.person_outline),
+                                  title: Text(peer['name'] ?? 'Unknown Peer'),
+                                  onTap: () async {
+                                    Navigator.pop(context);
+
+                                    final peerId = peer['id'];
+
+                                    if (peerId != null) {
+                                      await _pushSheetToPeer(documentId, peerId);
+                                    }
+                                  },
+                                );
+                              }),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  }
+                : null,
+                icon: const Icon(Icons.send_outlined),
+                label: const Text('Push Sheet'),
+              ),
+              TextButton.icon(
+                onPressed: () async {
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => Scaffold(
@@ -573,7 +754,11 @@ const SizedBox(height: 12),
                         ),
                       ),
                     ),
-                  );
+                    );
+
+                  if (mounted) {
+                    setState(() {});
+                  }
                 },
                 icon: const Icon(Icons.edit),
                 label: const Text('Edit'),
