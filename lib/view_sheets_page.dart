@@ -24,6 +24,12 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
   String _searchText = '';
   bool _showAllSheets = false;
   bool _showAssignedSheets = true;
+
+  bool _showAssignedToMe = true;
+  bool _showCreatedByMe = true;
+  bool _showPushedToMe = true;
+  bool _showAssignedByMe = true;
+
   List<String> _assignedSheetIds = [];
   Map<String, String> _assignedClonesByOriginalId = {};
   List<Map<String, String>> _acceptedPeers = [];
@@ -859,6 +865,46 @@ const SizedBox(height: 12),
                   });
                 },
               ),
+                        if (widget.studentId == null) ...[
+              if (widget.studentView)
+              CheckboxListTile(
+                title: const Text('Assigned to me'),
+                value: _showAssignedToMe,
+                onChanged: (value) {
+                  setState(() {
+                    _showAssignedToMe = value ?? false;
+                  });
+                },
+              ),
+              CheckboxListTile(
+                title: const Text('Created by me'),
+                value: _showCreatedByMe,
+                onChanged: (value) {
+                  setState(() {
+                    _showCreatedByMe = value ?? false;
+                  });
+                },
+              ),
+              CheckboxListTile(
+                title: const Text('Pushed to me'),
+                value: _showPushedToMe,
+                onChanged: (value) {
+                  setState(() {
+                    _showPushedToMe = value ?? false;
+                  });
+                },
+              ),
+              if (!widget.studentView)
+                CheckboxListTile(
+                  title: const Text('Assigned by me'),
+                  value: _showAssignedByMe,
+                  onChanged: (value) {
+                    setState(() {
+                      _showAssignedByMe = value ?? false;
+                    });
+                  },
+                ),
+            ],
             const SizedBox(height: 10),
 
             TextField(
@@ -896,6 +942,30 @@ const SizedBox(height: 12),
                       return false;
                     }
 
+                    final sheet = doc.data();
+                    final userId = currentUser?.uid;
+
+                    final isAssignedToMe =
+                        userId != null &&
+                        sheet['userId'] == userId &&
+                        sheet['Assigned'] != null;
+
+                    final isCreatedByMe =
+                        userId != null &&
+                        sheet['creatorEmail'] == currentUser?.email &&
+                        sheet['userId'] == userId;
+
+                    final isPushedToMe =
+                        userId != null &&
+                        sheet['userId'] == userId &&
+                        sheet['createdBy'] != userId &&
+                        sheet['Assigned'] == null &&
+                        sheet['restrictWrite'] == false;
+
+                    final isAssignedByMe =
+                        userId != null &&
+                        sheet['Assigned'] == userId;
+
                     if (widget.studentId != null) {
                       final isAssigned = _assignedSheetIds.contains(doc.id);
 
@@ -909,7 +979,14 @@ const SizedBox(height: 12),
                         return isAssigned || isInstructorOwned;
                       }
                     }
-
+                    if (widget.studentId == null) {
+                      return (_showAssignedToMe && isAssignedToMe) ||
+                          (_showCreatedByMe && isCreatedByMe) ||
+                          (_showPushedToMe && isPushedToMe) ||
+                          (!widget.studentView &&
+                              _showAssignedByMe &&
+                              isAssignedByMe);
+                    }
                     // Student viewing their own View Sheets page.
                     if (widget.studentView) {
                       if (_showAllSheets) {
