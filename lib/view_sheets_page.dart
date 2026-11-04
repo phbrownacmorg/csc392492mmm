@@ -29,6 +29,7 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
   bool _showCreatedByMe = true;
   bool _showPushedToMe = true;
   bool _showAssignedByMe = true;
+  bool _showPreviouslyAssigned = true;
 
   List<String> _assignedSheetIds = [];
   Map<String, String> _assignedClonesByOriginalId = {};
@@ -207,19 +208,27 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
           .collection('music_sheets')
           .where('userId', isEqualTo: widget.studentId)
           .where('backlink', isEqualTo: sheetId)
-          .where('creatorEmail', isEqualTo: currentUser.email)
           .get();
 
-      if (existingAssignment.docs.isNotEmpty) {
+      if (existingAssignment.docs.isNotEmpty) { 
         final activeCopies = existingAssignment.docs.where(
-          (doc) => doc.data()['Assigned'] != null,
+          (doc) => doc.data()['Assigned'] == currentUser.uid,
         );
+
 
         if (activeCopies.isNotEmpty) {
           return;
         }
 
-        final previousCopy = existingAssignment.docs.first;
+        final previousCopies = existingAssignment.docs.where(
+          (doc) =>
+              doc.data()['Assigned'] == null &&
+              doc.data()['creatorEmail'] == currentUser.email,
+        );
+
+        if (previousCopies.isNotEmpty) {
+
+        final previousCopy = previousCopies.first;
 
         await previousCopy.reference.update({
           'Assigned': currentUser.uid,
@@ -242,6 +251,7 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
         );
 
         return;
+        }
       }
 
       final originalData = originalSheet.data()!;
@@ -894,6 +904,18 @@ const SizedBox(height: 12),
                   });
                 },
               ),
+              
+              if (widget.studentView)
+                CheckboxListTile(
+                  title: const Text('Previously assigned'),
+                  value: _showPreviouslyAssigned,
+                  onChanged: (value) {
+                    setState(() {
+                      _showPreviouslyAssigned = value ?? false;
+                    });
+                  },
+                ),
+
               if (!widget.studentView)
                 CheckboxListTile(
                   title: const Text('Assigned by me'),
@@ -954,13 +976,20 @@ const SizedBox(height: 12),
                         userId != null &&
                         sheet['creatorEmail'] == currentUser?.email &&
                         sheet['userId'] == userId;
-
+                        
                     final isPushedToMe =
                         userId != null &&
                         sheet['userId'] == userId &&
                         sheet['createdBy'] != userId &&
                         sheet['Assigned'] == null &&
                         sheet['restrictWrite'] == false;
+
+                    final isPreviouslyAssigned =
+                      userId != null &&
+                      sheet['userId'] == userId &&
+                      sheet['backlink'] != null &&
+                      sheet['Assigned'] == null &&
+                      sheet['restrictWrite'] == null;
 
                     final isAssignedByMe =
                         userId != null &&
@@ -979,10 +1008,14 @@ const SizedBox(height: 12),
                         return isAssigned || isInstructorOwned;
                       }
                     }
+                    
                     if (widget.studentId == null) {
                       return (_showAssignedToMe && isAssignedToMe) ||
                           (_showCreatedByMe && isCreatedByMe) ||
                           (_showPushedToMe && isPushedToMe) ||
+                          (widget.studentView &&
+                              _showPreviouslyAssigned &&
+                              isPreviouslyAssigned) ||
                           (!widget.studentView &&
                               _showAssignedByMe &&
                               isAssignedByMe);

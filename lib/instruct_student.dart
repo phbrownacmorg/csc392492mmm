@@ -21,39 +21,66 @@ Future<void> _removeStudent(BuildContext context) async {
 
   final firestore = FirebaseFirestore.instance;
 
-  // Find sheets assigned by this instructor to this student.
-  final assignedSheets = await firestore
-      .collection('music_sheets')
-      .where('userId', isEqualTo: studentId)
-      .where('Assigned', isEqualTo: currentUser.uid)
-      .get();
+  try {
+    // Find sheets assigned by this instructor to this student.
+    final assignedSheets = await firestore
+        .collection('music_sheets')
+        .where('userId', isEqualTo: studentId)
+        .where('Assigned', isEqualTo: currentUser.uid)
+        .get();
 
-  // Remove assignment restrictions, but keep the student's copies.
-  for (final sheet in assignedSheets.docs) {
-    await sheet.reference.update({
-      'Assigned': null,
-      'restrictWrite': null,
-    });
+    // Find only this instructor's connection with the student.
+    final connections = await firestore
+        .collection('Connections')
+        .where('studentId', isEqualTo: studentId)
+        .where('instructorId', isEqualTo: currentUser.uid)
+        .get();
 
-    await firestore.collection('users').doc(studentId).update({
-      'assignedSheets': FieldValue.arrayRemove([sheet.id]),
-    });
+    final batch = firestore.batch();
+
+    // Keep the student's sheets, but remove this instructor's restrictions.
+    for (final sheet in assignedSheets.docs) {
+      batch.update(sheet.reference, {
+        'Assigned': null,
+        'restrictWrite': null,
+      });
+    }
+
+    // Remove only the IDs assigned by this instructor.
+    if (assignedSheets.docs.isNotEmpty) {
+      final sheetIds = assignedSheets.docs
+          .map((sheet) => sheet.id)
+          .toList();
+
+      batch.update(
+        firestore.collection('users').doc(studentId),
+        {
+          'assignedSheets': FieldValue.arrayRemove(sheetIds),
+        },
+      );
+    }
+
+    // Delete only this instructor-student connection.
+    for (final connection in connections.docs) {
+      batch.delete(connection.reference);
+    }
+
+    await batch.commit();
+
+    if (!context.mounted) return;
+
+    Navigator.pop(context);
+  } catch (e) {
+    debugPrint('Error removing student: $e');
+
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Could not remove student. Please try again.'),
+      ),
+    );
   }
-
-  // Remove only this instructor's connection with the student.
-  final connections = await firestore
-      .collection('Connections')
-      .where('studentId', isEqualTo: studentId)
-      .where('instructorId', isEqualTo: currentUser.uid)
-      .get();
-
-  for (final connection in connections.docs) {
-    await connection.reference.delete();
-  }
-
-  if (!context.mounted) return;
-
-  Navigator.pop(context);
 }
 
 @override
