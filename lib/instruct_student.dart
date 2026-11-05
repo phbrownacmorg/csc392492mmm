@@ -46,20 +46,6 @@ Future<void> _removeStudent(BuildContext context) async {
       });
     }
 
-    // Remove only the IDs assigned by this instructor.
-    if (assignedSheets.docs.isNotEmpty) {
-      final sheetIds = assignedSheets.docs
-          .map((sheet) => sheet.id)
-          .toList();
-
-      batch.update(
-        firestore.collection('users').doc(studentId),
-        {
-          'assignedSheets': FieldValue.arrayRemove(sheetIds),
-        },
-      );
-    }
-
     // Delete only this instructor-student connection.
     for (final connection in connections.docs) {
       batch.delete(connection.reference);

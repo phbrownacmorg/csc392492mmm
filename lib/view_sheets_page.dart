@@ -31,7 +31,6 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
   bool _showAssignedByMe = true;
   bool _showPreviouslyAssigned = true;
 
-  List<String> _assignedSheetIds = [];
   Map<String, String> _assignedClonesByOriginalId = {};
   List<Map<String, String>> _acceptedPeers = [];
 
@@ -115,53 +114,39 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
     _searchController.dispose();
     super.dispose();
   }
-
+  
   Future<void> _loadAssignedSheets() async {
     final studentId =
         widget.studentId ?? FirebaseAuth.instance.currentUser?.uid;
+    final currentUser = FirebaseAuth.instance.currentUser;
 
-    if (studentId == null) {
+    if (studentId == null || currentUser == null) {
       return;
     }
 
-    final studentDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(studentId)
+    final assignedSheets = await FirebaseFirestore.instance
+        .collection('music_sheets')
+        .where('userId', isEqualTo: studentId)
+        .where('Assigned', isEqualTo: currentUser.uid)
         .get();
 
-    final assignedSheets = studentDoc.data()?['assignedSheets'];
-
-    final assignedIds = assignedSheets is List
-        ? assignedSheets.map((id) => id.toString()).toList()
-        : <String>[];
-
     final clonesByOriginalId = <String, String>{};
-    final currentUser = FirebaseAuth.instance.currentUser;
 
-    for (final assignedId in assignedIds) {
-      final sheetDoc = await FirebaseFirestore.instance
-          .collection('music_sheets')
-          .doc(assignedId)
-          .get();
+    for (final doc in assignedSheets.docs) {
+      final backlink = doc.data()['backlink'];
 
-      if (!sheetDoc.exists) continue;
-
-      final sheetData = sheetDoc.data()!;
-      final backlink = sheetData['backlink'];
-
-      if (backlink is String &&
-          sheetData['Assigned'] == currentUser?.uid) {
-        clonesByOriginalId[backlink] = assignedId;
+      if (backlink is String) {
+        clonesByOriginalId[backlink] = doc.id;
       }
     }
 
     if (!mounted) return;
 
     setState(() {
-      _assignedSheetIds = assignedIds;
       _assignedClonesByOriginalId = clonesByOriginalId;
     });
   }
+
   Future<void> _assignSheet(String sheetId) async {
       final currentUser = FirebaseAuth.instance.currentUser;
 
@@ -235,13 +220,6 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
           'restrictWrite': restrictWrite,
         });
 
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(widget.studentId)
-            .update({
-          'assignedSheets': FieldValue.arrayUnion([previousCopy.id]),
-        });
-
         await _loadAssignedSheets();
 
         if (!mounted) return;
@@ -256,7 +234,7 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
 
       final originalData = originalSheet.data()!;
 
-      final clonedSheet = await FirebaseFirestore.instance
+      await FirebaseFirestore.instance
           .collection('music_sheets')
           .add({
         ...originalData,
@@ -267,13 +245,6 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
         'creationDate': FieldValue.serverTimestamp(),
         'Assigned': currentUser.uid,
         'restrictWrite': restrictWrite,
-      });
-
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.studentId)
-          .update({
-        'assignedSheets': FieldValue.arrayUnion([clonedSheet.id]),
       });
 
       await _loadAssignedSheets();
@@ -304,13 +275,6 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
           sheetData['Assigned'] != currentUser.uid) {
         return;
       }
-
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.studentId)
-          .update({
-        'assignedSheets': FieldValue.arrayRemove([sheetId]),
-      });
 
       await FirebaseFirestore.instance
           .collection('music_sheets')
@@ -413,16 +377,6 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
 
     if (!sheetDoc.exists) return;
 
-    final ownerId = sheetDoc.data()?['userId'];
-
-    if (ownerId is String && ownerId.isNotEmpty) {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(ownerId)
-          .update({
-        'assignedSheets': FieldValue.arrayRemove([documentId]),
-      });
-    }
     await FirebaseFirestore.instance
         .collection('music_sheets')
         .doc(documentId)
@@ -645,8 +599,7 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
         
     final isAssignedCopy =
         data['userId'] == widget.studentId &&
-        data['Assigned'] == FirebaseAuth.instance.currentUser?.uid &&
-        _assignedSheetIds.contains(documentId);
+        data['Assigned'] == FirebaseAuth.instance.currentUser?.uid;
 
     final assignedCloneId = _assignedClonesByOriginalId[documentId];
 
@@ -996,7 +949,9 @@ const SizedBox(height: 12),
                         sheet['Assigned'] == userId;
 
                     if (widget.studentId != null) {
-                      final isAssigned = _assignedSheetIds.contains(doc.id);
+                      final isAssigned =
+                          sheet['userId'] == widget.studentId &&
+                          sheet['Assigned'] == currentUser?.uid;
 
                       if (_showAssignedSheets) {
                         return isAssigned;
@@ -1029,7 +984,9 @@ const SizedBox(height: 12),
                       final isOwned = doc.data()['userId'] ==
                           FirebaseAuth.instance.currentUser?.uid;
 
-                      final isAssigned = _assignedSheetIds.contains(doc.id);
+                      final isAssigned =
+                          doc.data()['userId'] == currentUser?.uid &&
+                          doc.data()['Assigned'] != null;
 
                       return isOwned || isAssigned;
                     }

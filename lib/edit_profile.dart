@@ -24,7 +24,6 @@ class _EditProfileState extends State<EditProfile> {
   // Currently unused
   String myInstructors = '[Not Logged In]';
   String problems = '[Not Logged In]';
-  String assignedSheets = '[Not Logged In]';
   String completedSheets = '[Not Logged In]';
 
   // Extra data
@@ -61,7 +60,6 @@ class _EditProfileState extends State<EditProfile> {
         oldPhone = data['phone'] ?? '';
         myInstructors = data['myInstructors']?.join(', ') ?? '[No Instructors Set]';
         problems = data['problems']?.join(', ') ?? '[No Problems Found]';
-        assignedSheets = data['assignedSheets']?.join(', ') ?? '[No Sheets Assigned]';
         completedSheets = data['completedSheets']?.join(', ') ?? '[No Sheets Completed]';
       });
       if (oldPhone != '') {

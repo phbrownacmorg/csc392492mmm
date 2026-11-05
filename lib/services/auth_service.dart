@@ -57,7 +57,6 @@ class AuthService {
           'phone': null,
           'myInstructors': [],
           'problems': [],
-          'assignedSheets': [],
           'completedSheets': [],
           'googleAccount': null,
           'facebookAccount': null,
@@ -227,7 +226,6 @@ class AuthService {
       'phone': null,
       'myInstructors': [],
       'problems': [],
-      'assignedSheets': [],
       'completedSheets': [],
     }, SetOptions(merge: true));
   }
