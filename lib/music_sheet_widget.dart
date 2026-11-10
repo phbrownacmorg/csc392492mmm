@@ -644,6 +644,12 @@ class _MusicSheetWidgetState extends State<MusicSheetWidget> {
       final data = _getSheetData();
 
       final currentUser = FirebaseAuth.instance.currentUser;
+      
+      if (currentUser != null) {
+        data['lastSavedBy'] = currentUser.uid;
+        data['lastSavedByEmail'] = currentUser.email;
+        data['lastSavedAt'] = FieldValue.serverTimestamp();
+      }
 
       if (currentUser != null && !widget.isEditing) {
         data['userId'] = currentUser.uid;

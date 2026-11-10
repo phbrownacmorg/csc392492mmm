@@ -630,6 +630,13 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
           const SizedBox(height: 8),
           Align(
             alignment: Alignment.centerLeft,
+            child: Text(
+              'Last Saved By: ${data['lastSavedByEmail'] ?? 'Not recorded'}',
+            ),
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
             child: Text('Notes: ${data['notes'] ?? ''}'),
           ),
           const SizedBox(height: 12),
@@ -929,11 +936,12 @@ const SizedBox(height: 12),
                         userId != null &&
                         sheet['creatorEmail'] == currentUser?.email &&
                         sheet['userId'] == userId;
-                        
+
                     final isPushedToMe =
                         userId != null &&
                         sheet['userId'] == userId &&
-                        sheet['createdBy'] != userId &&
+                        sheet['backlink'] != null &&
+                        sheet['creatorEmail'] != currentUser?.email &&
                         sheet['Assigned'] == null &&
                         sheet['restrictWrite'] == false;
 
