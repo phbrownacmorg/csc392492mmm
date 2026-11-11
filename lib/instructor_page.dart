@@ -5,6 +5,7 @@ import 'profile_page.dart';
 import 'view_sheets_page.dart';
 import 'view_database_page.dart';
 import 'view_students.dart';
+import 'logged_in_user.dart';
 
 class InstructorPage extends StatelessWidget {
   const InstructorPage({super.key});
@@ -13,7 +14,20 @@ class InstructorPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Instructor'),
+        toolbarHeight: 70,
+        title: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Instructor',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            LoggedInUser(),
+          ],
+        ),
         centerTitle: true,
         actions: [
           Padding(

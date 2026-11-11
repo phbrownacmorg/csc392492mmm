@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'instruct_student.dart';
+import 'logged_in_user.dart';
 
 class ViewStudentsPage extends StatefulWidget {
   const ViewStudentsPage({super.key});
@@ -179,9 +180,22 @@ return uniqueUsers.values.toList();
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('View Students'),
-        centerTitle: true,
-        actions: [
+          toolbarHeight: 70,
+          title: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'View Students',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              LoggedInUser(),
+            ],
+          ),
+          centerTitle: true,
+          actions: [
           TextButton.icon(
             onPressed: () async {
               final availableStudents = await _loadAvailableStudents();
