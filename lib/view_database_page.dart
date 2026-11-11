@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';// for database access
+import 'package:music_app/logged_in_user.dart';
 
 //class to hold info for a database item
 class Document{
@@ -180,9 +181,24 @@ class ViewDatabaseSheetPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Database View Page'),
+        title: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Database View Page',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            LoggedInUser(textColor: Colors.white),
+          ],
+        ),
+        toolbarHeight: 70,
         centerTitle: true,
-        backgroundColor: Colors.teal,
+        backgroundColor: Colors.blue,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         child: Padding(

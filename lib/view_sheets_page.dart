@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:video_player/video_player.dart';
 import 'music_sheet_widget.dart';
+import 'package:music_app/logged_in_user.dart';
 
 class ViewSheetsPage extends StatefulWidget {
   final String? studentId;
@@ -788,9 +789,24 @@ const SizedBox(height: 12),
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('View Sheets'),
+        title: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'View Sheets',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            LoggedInUser(textColor: Colors.white),
+          ],
+        ),
+        toolbarHeight: 70,
         centerTitle: true,
         backgroundColor: Colors.deepOrange,
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           TextButton.icon(
             onPressed: () async {

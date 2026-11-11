@@ -18,6 +18,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'admin_page.dart';
 import 'instructor_page.dart';
+import 'package:music_app/services/auth_service.dart';
+import 'package:music_app/logged_in_user.dart';
 
 Future<void> main() async {
 
@@ -303,7 +305,25 @@ class MyHomePage extends StatelessWidget {
 
       appBar: AppBar(
 
-        title: const Text('Music Sheet App'),
+        title: FutureBuilder<Map<String, dynamic>?>(
+          future: AuthService().getUserData(),
+          builder: (context, snapshot) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Music Sheet App',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const LoggedInUser(),
+              ],
+            );
+          },
+        ),
+        toolbarHeight: 85,
 
         centerTitle: true,
 
