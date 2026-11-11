@@ -29,20 +29,24 @@ class _ViewStudentsPageState extends State<ViewStudentsPage> {
     for (final connection in connectionsSnapshot.docs) {
       final connectionData = connection.data();
 
-      if (connectionData['accepted'] != null) {
+      if (connectionData['connectionType'] == 'instructor-student') {
         final studentId = connectionData['studentId'];
 
         final studentDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(studentId)
             .get();
-
-        if (studentDoc.exists) {
-          students.add({
-            'uid': studentId,
-            ...studentDoc.data()!,
-          });
+        
+        if (!studentDoc.exists || studentDoc.data() == null) {
+          continue;
         }
+        
+        students.add({
+          'uid': studentId,
+          ...studentDoc.data()!,
+          'connectionId': connection.id,
+          'isPending': connectionData['accepted'] == null,
+        });
       }
     }
 
@@ -319,7 +323,16 @@ return uniqueUsers.values.toList();
                 child: ListTile(
                   title: Text('$firstName $lastName'),
                   subtitle: Text(email),
-                  trailing: TextButton(
+                  trailing: student['isPending'] == true
+                ? const Text(
+                    'Pending',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                : TextButton(
                     onPressed: () async {
                       await Navigator.push(
                         context,

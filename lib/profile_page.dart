@@ -347,6 +347,46 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _acceptConnection(Map<String, dynamic> connection) async {
     final connectionId = connection['id'];
 
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    final requesterId = connection['requesterId'];
+    if (requesterId == null) return;
+
+    final instructorConnections = await FirebaseFirestore.instance
+        .collection('Connections')
+        .get();
+
+    final studentOfConnections = await FirebaseFirestore.instance
+        .collection('StudentOf')
+        .get();
+
+    bool hasInstructorConnection(
+        Map<String, dynamic> data,
+    ) {
+      return (data['instructorId'] == currentUser.uid &&
+              data['studentId'] == requesterId) ||
+          (data['instructorId'] == requesterId &&
+              data['studentId'] == currentUser.uid);
+    }
+
+    final hasConflict = instructorConnections.docs.any(
+          (doc) => hasInstructorConnection(doc.data()),
+        ) ||
+        studentOfConnections.docs.any(
+          (doc) => hasInstructorConnection(doc.data()),
+        );
+
+    if (hasConflict) {
+      if (!mounted) return;
+
+      snackBarMessage(
+        'Cannot accept peer invitation. '
+        'An Instructor-Student connection already exists.',
+      );
+      return;
+    }
+
     await FirebaseFirestore.instance
         .collection('Connections')
         .doc(connectionId)
