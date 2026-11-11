@@ -653,6 +653,13 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
             alignment: Alignment.centerLeft,
             child: Text('Notes: ${data['notes'] ?? ''}'),
           ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Student Notes: ${data['studentNotes'] ?? ''}',
+            ),
+          ),
           const SizedBox(height: 12),
           _buildRowsPreview(rows is List ? rows : []),
           const SizedBox(height: 12),
