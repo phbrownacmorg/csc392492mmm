@@ -22,6 +22,7 @@ class _ProfilePageState extends State<ProfilePage> {
   List<Map<String, dynamic>> pendingConnections = [];
   List<Map<String, dynamic>> pendingPeerConnections = [];
   List<Map<String, dynamic>> acceptedPeerConnections = [];
+  List<Map<String, dynamic>> sentPendingPeerConnections = [];
   final TextEditingController _peerEmailController = TextEditingController();
   bool _isSendingPeerRequest = false;
   String? _peerEmailError;
@@ -82,6 +83,30 @@ class _ProfilePageState extends State<ProfilePage> {
           .get();
 
       acceptedPeerConnections = [];
+
+      sentPendingPeerConnections = [];
+
+      for (final peerDoc in sentPeerSnapshot.docs) {
+        final peerData = peerDoc.data();
+
+        if (peerData['connectionType'] == 'peer' &&
+            peerData['accepted'] == null) {
+          final receiverDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(peerData['receiverId'])
+              .get();
+
+          final receiverData = receiverDoc.data();
+          final peerFirstName = receiverData?['firstName'] ?? '';
+          final peerLastName = receiverData?['lastName'] ?? '';
+
+          sentPendingPeerConnections.add({
+            'id': peerDoc.id,
+            ...peerData,
+            'peerName': '$peerFirstName $peerLastName'.trim(),
+          });
+        }
+      }
 
       final allPeerDocs = [
         ...peerConnectionsSnapshot.docs,
@@ -255,28 +280,39 @@ class _ProfilePageState extends State<ProfilePage> {
 
       final existingConnections = await FirebaseFirestore.instance
           .collection('Connections')
-          .where('connectionType', isEqualTo: 'peer')
           .get();
 
       for (final doc in existingConnections.docs) {
         final data = doc.data();
 
         final samePeople =
+            // Peer connections
             (data['requesterId'] == currentUser.uid &&
                 data['receiverId'] == peerId) ||
             (data['requesterId'] == peerId &&
-                data['receiverId'] == currentUser.uid);
+                data['receiverId'] == currentUser.uid) ||
+
+            // Instructor-Student connections
+            (data['instructorId'] == currentUser.uid &&
+                data['studentId'] == peerId) ||
+            (data['instructorId'] == peerId &&
+                data['studentId'] == currentUser.uid);
 
         if (!samePeople) continue;
 
         if (!mounted) return;
 
         setState(() {
-          if (data['accepted'] != null) {
+          if (data['instructorId'] != null &&
+              data['studentId'] != null) {
+            _peerEmailError =
+                'You already have an Instructor-Student connection with this user. '
+                'This connection must be removed before requesting a peer connection.';
+          } else if (data['accepted'] != null) {
             _peerEmailError = "You're already connected to $email.";
           } else {
             _peerEmailError =
-                "You have already requested a connection with $email.";
+                "A peer connection request already exists between you and $email.";
           }
         });
 
@@ -372,6 +408,23 @@ class _ProfilePageState extends State<ProfilePage> {
 
     snackBarMessage('Peer connection rejected.');
   }
+
+  Future<void> _cancelSentPeerRequest(
+      Map<String, dynamic> connection) async {
+    final connectionId = connection['id'];
+
+    await FirebaseFirestore.instance
+        .collection('Connections')
+        .doc(connectionId)
+        .delete();
+
+    await _loadProfile();
+
+    if (!mounted) return;
+
+    snackBarMessage('Peer connection request canceled.');
+  }
+
   Future<void> _disconnectPeerConnection(
       Map<String, dynamic> connection) async {
     final connectionId = connection['id'];
@@ -579,6 +632,49 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
 
             ],
+
+            if (sentPendingPeerConnections.isNotEmpty) ...[
+              const Text(
+                'Pending Sent Requests:',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              ...sentPendingPeerConnections.map(
+                (connection) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          connection['peerName'] ?? '',
+                          style: const TextStyle(fontSize: 18),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Pending',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.orange,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton(
+                        onPressed: () => _cancelSentPeerRequest(connection),
+                        child: const Text('Cancel Request'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+            ],
+
             if (acceptedPeerConnections.isNotEmpty) ...[
               const Text(
                 'My Peers:',
