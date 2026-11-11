@@ -153,6 +153,18 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
       if (widget.studentId == null || currentUser == null) {
         return;
       }
+      final studentDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.studentId!)
+          .get();
+
+      final studentData = studentDoc.data();
+
+      final studentName =
+      
+    '${studentData?['firstName'] ?? ''} ${studentData?['lastName'] ?? ''}'
+        .trim();
+      if (!mounted) return;
 
       final bool? restrictWrite = await showDialog<bool>(
         context: context,
@@ -218,6 +230,7 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
         await previousCopy.reference.update({
           'Assigned': currentUser.uid,
           'restrictWrite': restrictWrite,
+          'studentName': studentName,
         });
 
         await _loadAssignedSheets();
@@ -245,6 +258,7 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
         'creationDate': FieldValue.serverTimestamp(),
         'Assigned': currentUser.uid,
         'restrictWrite': restrictWrite,
+        'studentName': studentName,
       });
 
       await _loadAssignedSheets();
