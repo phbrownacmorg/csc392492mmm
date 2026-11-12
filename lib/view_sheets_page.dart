@@ -7,11 +7,13 @@ import 'package:music_app/logged_in_user.dart';
 
 class ViewSheetsPage extends StatefulWidget {
   final String? studentId;
+  final String? studentName;
   final bool studentView;
 
   const ViewSheetsPage({
     super.key,
     this.studentId,
+    this.studentName,
     this.studentView = false,
   });
 
@@ -32,13 +34,11 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
   bool _showAssignedByMe = true;
   bool _showPreviouslyAssigned = true;
 
-  Map<String, String> _assignedClonesByOriginalId = {};
   List<Map<String, String>> _acceptedPeers = [];
 
   @override
   void initState() {
     super.initState();
-    _loadAssignedSheets();
     _loadAcceptedPeers();
   }
 
@@ -114,38 +114,6 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
-  }
-  
-  Future<void> _loadAssignedSheets() async {
-    final studentId =
-        widget.studentId ?? FirebaseAuth.instance.currentUser?.uid;
-    final currentUser = FirebaseAuth.instance.currentUser;
-
-    if (studentId == null || currentUser == null) {
-      return;
-    }
-
-    final assignedSheets = await FirebaseFirestore.instance
-        .collection('music_sheets')
-        .where('userId', isEqualTo: studentId)
-        .where('Assigned', isEqualTo: currentUser.uid)
-        .get();
-
-    final clonesByOriginalId = <String, String>{};
-
-    for (final doc in assignedSheets.docs) {
-      final backlink = doc.data()['backlink'];
-
-      if (backlink is String) {
-        clonesByOriginalId[backlink] = doc.id;
-      }
-    }
-
-    if (!mounted) return;
-
-    setState(() {
-      _assignedClonesByOriginalId = clonesByOriginalId;
-    });
   }
 
   Future<void> _assignSheet(String sheetId) async {
@@ -234,8 +202,6 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
           'studentName': studentName,
         });
 
-        await _loadAssignedSheets();
-
         if (!mounted) return;
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -261,8 +227,6 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
         'restrictWrite': restrictWrite,
         'studentName': studentName,
       });
-
-      await _loadAssignedSheets();
 
       if (!mounted) return;
 
@@ -298,8 +262,6 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
         'Assigned': null,
         'restrictWrite': null,
       });
-
-      await _loadAssignedSheets();
 
       if (!mounted) return;
 
@@ -616,8 +578,6 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
         data['userId'] == widget.studentId &&
         data['Assigned'] == FirebaseAuth.instance.currentUser?.uid;
 
-    final assignedCloneId = _assignedClonesByOriginalId[documentId];
-
     final rows = data['rows'];
     final createdAt = data['createdAt'];
 
@@ -679,21 +639,17 @@ const SizedBox(height: 12),
                   onPressed: () {
                     if (isAssignedCopy) {
                       _unassignSheet(documentId);
-                    } else if (assignedCloneId != null) {
-                      _unassignSheet(assignedCloneId);
                     } else {
                       _assignSheet(documentId);
                     }
                   },
                   icon: Icon(
-                    isAssignedCopy || assignedCloneId != null
+                    isAssignedCopy
                         ? Icons.remove_circle_outline
                         : Icons.assignment_add,
                   ),
                   label: Text(
-                    isAssignedCopy || assignedCloneId != null
-                        ? 'Unassign'
-                        : 'Assign',
+                    isAssignedCopy ? 'Unassign' : 'Assign',
                   ),
                 ),
               TextButton.icon(
@@ -789,11 +745,13 @@ const SizedBox(height: 12),
 
     return Scaffold(
       appBar: AppBar(
-        title: const Column(
+        title: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'View Sheets',
+              widget.studentName != null
+                  ? 'View Sheets for ${widget.studentName}'
+                  : 'View Sheets',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,

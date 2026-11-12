@@ -12,6 +12,52 @@ class ViewStudentsPage extends StatefulWidget {
 }
 
 class _ViewStudentsPageState extends State<ViewStudentsPage> {
+  Future<void> _cancelPendingRequest(String connectionId) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    try {
+      final connectionRef = FirebaseFirestore.instance
+          .collection('Connections')
+          .doc(connectionId);
+
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final snapshot = await transaction.get(connectionRef);
+
+        if (!snapshot.exists) {
+          throw Exception('Request no longer exists.');
+        }
+
+        final data = snapshot.data()!;
+
+        if (data['instructorId'] != currentUser.uid ||
+            data['connectionType'] != 'instructor-student' ||
+            data['accepted'] != null) {
+          throw Exception('Request cannot be canceled.');
+        }
+
+        transaction.delete(connectionRef);
+      });
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Student request canceled.'),
+        ),
+      );
+
+      setState(() {});
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not cancel request. Please try again.'),
+        ),
+      );
+    }
+  }
   Future<List<Map<String, dynamic>>> _loadStudents() async {
     final currentUser = FirebaseAuth.instance.currentUser;
 
@@ -40,7 +86,7 @@ class _ViewStudentsPageState extends State<ViewStudentsPage> {
         if (!studentDoc.exists || studentDoc.data() == null) {
           continue;
         }
-        
+
         students.add({
           'uid': studentId,
           ...studentDoc.data()!,
@@ -324,36 +370,75 @@ return uniqueUsers.values.toList();
                   title: Text('$firstName $lastName'),
                   subtitle: Text(email),
                   trailing: student['isPending'] == true
-                ? const Text(
-                    'Pending',
-                    style: TextStyle(
-                      color: Colors.orange,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  )
-                : TextButton(
-                    onPressed: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => InstructStudentPage(
-                            studentId: student['uid'],
-                            studentName: '$firstName $lastName',
-                          ),
-                        ),
-                      );
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'Pending',
+                              style: TextStyle(
+                                color: Colors.orange,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            TextButton(
+                              onPressed: () async {
+                                final confirmed = await showDialog<bool>(
+                                  context: context,
+                                  builder: (dialogContext) => AlertDialog(
+                                    title: const Text('Cancel Request'),
+                                    content: Text(
+                                      'Cancel the pending request for $firstName $lastName?',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(dialogContext, false),
+                                        child: const Text('Keep Request'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(dialogContext, true),
+                                        child: const Text('Cancel Request'),
+                                      ),
+                                    ],
+                                  ),
+                                );
 
-                      setState(() {});
-                    },
-                    child: const Text('Manage'),
-                  ),
-                ),
-              );
-            },
+                                if (confirmed != true || !mounted) return;
+
+                                await _cancelPendingRequest(
+                                  student['connectionId'].toString(),
+                                );
+                              },
+                              child: const Text('Cancel'),
+                            ),
+                          ],
+                        )
+                      : TextButton(
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => InstructStudentPage(
+                                  studentId: student['uid'],
+                                  studentName: '$firstName $lastName',
+                                ),
+                              ),
+                            );
+
+                            if (!mounted) return;
+                            setState(() {});
+                          },
+                          child: const Text('Manage'),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           );
-        },
-      ),
-    );
-  }
-}
+        }
+      }

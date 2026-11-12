@@ -87,6 +87,7 @@ Future<void> _removeStudent(BuildContext context) async {
                   MaterialPageRoute(
                     builder: (context) => ViewSheetsPage(
                       studentId: studentId,
+                      studentName: studentName,
                     ),
                   ),
                 );
