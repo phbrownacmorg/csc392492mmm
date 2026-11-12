@@ -589,12 +589,49 @@ class _ViewSheetsPageState extends State<ViewSheetsPage> {
 
     final sheetName = data['sheetName']?.toString() ?? 'Untitled Sheet';
 
+    final assigned = data['Assigned'] != null;
+    final storedStudentName =
+        data['studentName']?.toString().trim() ?? '';
+    final ownerId = data['userId']?.toString();
+
+    Future<String> resolveStudentName() async {
+      if (!assigned) return '';
+
+      if (storedStudentName.isNotEmpty) {
+        return storedStudentName;
+      }
+
+      if (ownerId == null || ownerId.isEmpty) {
+        return '';
+      }
+
+      final studentDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(ownerId)
+          .get();
+
+      if (!studentDoc.exists) return '';
+
+      final studentData = studentDoc.data();
+      if (studentData == null) return '';
+
+      return '${studentData['firstName'] ?? ''} ${studentData['lastName'] ?? ''}'
+          .trim();
+    }
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: ExpansionTile(
         title: Text(sheetName),
-        subtitle: Text(
-          'Student: ${data['studentName'] ?? ''}\nCreated: $createdDateText',
+        subtitle: FutureBuilder<String>(
+          future: resolveStudentName(),
+          builder: (context, snapshot) {
+            final studentName = snapshot.data ?? storedStudentName;
+
+            return Text(
+              'Student: $studentName\nCreated: $createdDateText',
+            );
+          },
         ),
         childrenPadding: const EdgeInsets.all(16),
         children: [
