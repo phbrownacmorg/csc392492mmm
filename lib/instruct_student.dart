@@ -16,29 +16,40 @@ class InstructStudentPage extends StatelessWidget {
 
 Future<void> _removeStudent(BuildContext context) async {
   final currentUser = FirebaseAuth.instance.currentUser;
-
   if (currentUser == null) return;
 
   final firestore = FirebaseFirestore.instance;
 
   try {
-    // Find sheets assigned by this instructor to this student.
     final assignedSheets = await firestore
         .collection('music_sheets')
         .where('userId', isEqualTo: studentId)
         .where('Assigned', isEqualTo: currentUser.uid)
         .get();
 
-    // Find only this instructor's connection with the student.
     final connections = await firestore
         .collection('Connections')
         .where('studentId', isEqualTo: studentId)
         .where('instructorId', isEqualTo: currentUser.uid)
         .get();
 
+    final allConnections =
+        await firestore.collection('Connections').get();
+
+    final existingPeers = allConnections.docs.where((doc) {
+      final data = doc.data();
+
+      if (data['connectionType'] != 'peer') return false;
+
+      return (data['requesterId'] == currentUser.uid &&
+              data['receiverId'] == studentId) ||
+          (data['requesterId'] == studentId &&
+              data['receiverId'] == currentUser.uid);
+    }).toList();
+
     final batch = firestore.batch();
 
-    // Keep the student's sheets, but remove this instructor's restrictions.
+    // Keep the sheets, but remove instructor restrictions.
     for (final sheet in assignedSheets.docs) {
       batch.update(sheet.reference, {
         'Assigned': null,
@@ -46,24 +57,45 @@ Future<void> _removeStudent(BuildContext context) async {
       });
     }
 
-    // Delete only this instructor-student connection.
+    // Ensure an accepted Peer Connection remains.
+    if (existingPeers.isEmpty) {
+      final peerRef = firestore.collection('Connections').doc();
+
+      batch.set(peerRef, {
+        'connectionType': 'peer',
+        'requesterId': currentUser.uid,
+        'receiverId': studentId,
+        'accepted': FieldValue.serverTimestamp(),
+      });
+    } else {
+      for (final peer in existingPeers) {
+        if (peer.data()['accepted'] == null) {
+          batch.update(peer.reference, {
+            'accepted': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+    }
+
+    // Remove only the instructor-student relationship.
     for (final connection in connections.docs) {
-      batch.delete(connection.reference);
+      if (connection.data()['connectionType'] == 'instructor-student') {
+        batch.delete(connection.reference);
+      }
     }
 
     await batch.commit();
 
     if (!context.mounted) return;
-
     Navigator.pop(context);
   } catch (e) {
-    debugPrint('Error removing student: $e');
+    debugPrint('Error dismissing student: $e');
 
     if (!context.mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Could not remove student. Please try again.'),
+        content: Text('Could not dismiss student. Please try again.'),
       ),
     );
   }

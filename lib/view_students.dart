@@ -131,20 +131,6 @@ class _ViewStudentsPageState extends State<ViewStudentsPage> {
         }
       }
 
-      if (data['requesterId'] == currentUser.uid) {
-        final receiverId = data['receiverId']?.toString();
-        if (receiverId != null) {
-          studentsWithInstructor.add(receiverId);
-        }
-      }
-
-      if (data['receiverId'] == currentUser.uid) {
-        final requesterId = data['requesterId']?.toString();
-        if (requesterId != null) {
-          studentsWithInstructor.add(requesterId);
-        }
-      }
-
       if (data['studentId'] == currentUser.uid) {
         final instructorId = data['instructorId']?.toString();
         if (instructorId != null) {

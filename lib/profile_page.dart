@@ -236,6 +236,7 @@ class _ProfilePageState extends State<ProfilePage> {
       print('Unable to access profile data');
     }
   }
+
   Future<void> _requestPeerConnection() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null || _isSendingPeerRequest) return;
@@ -344,61 +345,85 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     }
   }
-  Future<void> _acceptConnection(Map<String, dynamic> connection) async {
-    final connectionId = connection['id'];
-
+  Future<void> _acceptConnection(
+      Map<String, dynamic> connection) async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
 
-    final requesterId = connection['requesterId'];
-    if (requesterId == null) return;
+    final connectionId = connection['id']?.toString();
+    final instructorId = connection['instructorId']?.toString();
+    final studentId = connection['studentId']?.toString();
 
-    final instructorConnections = await FirebaseFirestore.instance
-        .collection('Connections')
-        .get();
-
-    final studentOfConnections = await FirebaseFirestore.instance
-        .collection('StudentOf')
-        .get();
-
-    bool hasInstructorConnection(
-        Map<String, dynamic> data,
-    ) {
-      return (data['instructorId'] == currentUser.uid &&
-              data['studentId'] == requesterId) ||
-          (data['instructorId'] == requesterId &&
-              data['studentId'] == currentUser.uid);
-    }
-
-    final hasConflict = instructorConnections.docs.any(
-          (doc) => hasInstructorConnection(doc.data()),
-        ) ||
-        studentOfConnections.docs.any(
-          (doc) => hasInstructorConnection(doc.data()),
-        );
-
-    if (hasConflict) {
-      if (!mounted) return;
-
-      snackBarMessage(
-        'Cannot accept peer invitation. '
-        'An Instructor-Student connection already exists.',
-      );
+    if (connectionId == null ||
+        instructorId == null ||
+        studentId != currentUser.uid) {
+      snackBarMessage('Invalid instructor invitation.');
       return;
     }
 
-    await FirebaseFirestore.instance
-        .collection('Connections')
-        .doc(connectionId)
-        .update({
-      'accepted': FieldValue.serverTimestamp(),
-    });
+    try {
+      final firestore = FirebaseFirestore.instance;
 
-    await _loadProfile();
+      final instructorConnectionRef =
+          firestore.collection('Connections').doc(connectionId);
 
-    if (!mounted) return;
+      final existingConnections =
+          await firestore.collection('Connections').get();
 
-    snackBarMessage('Instructor invitation accepted.');
+      final peerConnections = existingConnections.docs.where((doc) {
+        final data = doc.data();
+
+        if (data['connectionType'] != 'peer') return false;
+
+        return (data['requesterId'] == instructorId &&
+                data['receiverId'] == studentId) ||
+            (data['requesterId'] == studentId &&
+                data['receiverId'] == instructorId);
+      }).toList();
+
+      final batch = firestore.batch();
+
+      batch.update(instructorConnectionRef, {
+        'accepted': FieldValue.serverTimestamp(),
+      });
+
+      if (peerConnections.isEmpty) {
+        final peerRef = firestore.collection('Connections').doc();
+
+        batch.set(peerRef, {
+          'connectionType': 'peer',
+          'requesterId': instructorId,
+          'receiverId': studentId,
+          'accepted': FieldValue.serverTimestamp(),
+        });
+      } else {
+        for (final peer in peerConnections) {
+          if (peer.data()['accepted'] == null) {
+            batch.update(peer.reference, {
+              'accepted': FieldValue.serverTimestamp(),
+            });
+          }
+        }
+      }
+
+      await batch.commit();
+
+      await _loadProfile();
+
+      if (!mounted) return;
+
+      snackBarMessage(
+        'Instructor invitation accepted. Peer connection established.',
+      );
+    } catch (e) {
+      debugPrint('Error accepting instructor invitation: $e');
+
+      if (!mounted) return;
+
+      snackBarMessage(
+        'Could not accept instructor invitation. Please try again.',
+      );
+    }
   }
 
   Future<void> _rejectConnection(Map<String, dynamic> connection) async {
@@ -467,19 +492,91 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _disconnectPeerConnection(
       Map<String, dynamic> connection) async {
-    final connectionId = connection['id'];
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
 
-    await FirebaseFirestore.instance
-        .collection('Connections')
-        .doc(connectionId)
-        .delete();
+    final connectionId = connection['id']?.toString();
+    if (connectionId == null) return;
 
-    await _loadProfile();
+    try {
+      final firestore = FirebaseFirestore.instance;
 
-    if (!mounted) return;
+      final peerRef =
+          firestore.collection('Connections').doc(connectionId);
 
-    snackBarMessage('Peer connection removed.');
+      final peerDoc = await peerRef.get();
+
+      if (!peerDoc.exists) {
+        snackBarMessage('Peer connection no longer exists.');
+        await _loadProfile();
+        return;
+      }
+
+      final peerData = peerDoc.data()!;
+
+      if (peerData['connectionType'] != 'peer' ||
+          peerData['accepted'] == null) {
+        snackBarMessage('Invalid peer connection.');
+        return;
+      }
+
+      final requesterId = peerData['requesterId'];
+      final receiverId = peerData['receiverId'];
+
+      if (requesterId != currentUser.uid &&
+          receiverId != currentUser.uid) {
+        snackBarMessage('You cannot remove this connection.');
+        return;
+      }
+
+      final otherUserId = requesterId == currentUser.uid
+          ? receiverId
+          : requesterId;
+
+      final connectionsSnapshot =
+          await firestore.collection('Connections').get();
+
+      final hasInstructorStudentConnection =
+          connectionsSnapshot.docs.any((doc) {
+        final data = doc.data();
+
+        if (data['connectionType'] != 'instructor-student') {
+          return false;
+        }
+
+        return (data['instructorId'] == currentUser.uid &&
+                data['studentId'] == otherUserId) ||
+            (data['instructorId'] == otherUserId &&
+                data['studentId'] == currentUser.uid);
+      });
+
+      if (hasInstructorStudentConnection) {
+        if (!mounted) return;
+
+        snackBarMessage(
+          'Dismiss the instructor-student connection before disconnecting as peers.',
+        );
+        return;
+      }
+
+      await peerRef.delete();
+
+      await _loadProfile();
+
+      if (!mounted) return;
+
+      snackBarMessage('Peer connection removed.');
+    } catch (e) {
+      debugPrint('Error disconnecting peer: $e');
+
+      if (!mounted) return;
+
+      snackBarMessage(
+        'Could not remove peer connection. Please try again.',
+      );
+    }
   }
+
   void popPage() {
     Navigator.pop(context);
   }
